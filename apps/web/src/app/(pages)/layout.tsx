@@ -59,12 +59,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <meta name='google-site-verification' content='ww7YPb1kClVezWYDUBhYUWDPFWBPqRuTxZjX4YJb45U' />
         <meta name='application-name' content='Bookmarket' />
-        <meta name='apple-mobile-web-app-capable' content='yes' />
-        <meta name='apple-mobile-web-app-status-bar-style' content='default' />
-        <meta name='apple-mobile-web-app-title' content='Bookmarket' />
-        <meta name='theme-color' content='#FCFCFC' />
-        <link rel='manifest' href='/manifest.json' />
-        <link rel='apple-touch-icon' href='/logos/logo-base-256x256.png' />
         <link rel='icon' href='/favicon.ico' />
       </head>
       <body className='select-none sm:select-text'>

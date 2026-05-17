@@ -1,5 +1,4 @@
 import { withSentryConfig } from '@sentry/nextjs';
-import withPWA from '@ducanh2912/next-pwa';
 import { fileURLToPath } from 'node:url';
 
 /**
@@ -55,17 +54,7 @@ const nextConfig = {
   },
 };
 
-const pwaConfig = withPWA({
-  dest: 'public',
-  register: true,
-  disable: process.env.NODE_ENV === 'development',
-  workboxOptions: {
-    skipWaiting: true,
-    clientsClaim: true,
-  },
-})(nextConfig);
-
-export default withSentryConfig(pwaConfig, {
+export default withSentryConfig(nextConfig, {
   org: 'bokdol',
   project: 'bookmarket',
   silent: !process.env.CI,

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "bookmarket-raycast",
+  "title": "Bookmarket",
+  "description": "Add and search Bookmarket bookmarks from Raycast.",
+  "icon": "bookmarket-icon.png",
+  "author": "eric-jy-park",
+  "license": "MIT",
+  "categories": [
+    "Productivity"
+  ],
+  "commands": [
+    {
+      "name": "search-bookmarks",
+      "title": "Search Bookmarks",
+      "description": "Search Bookmarket bookmarks through the backend search index.",
+      "mode": "view"
+    },
+    {
+      "name": "add-bookmark",
+      "title": "Add Bookmark",
+      "description": "Save a URL to Bookmarket.",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "apiBaseUrl",
+      "title": "API Base URL",
+      "description": "Use the API origin or /api/v1 root. Local example: http://localhost:8080",
+      "type": "textfield",
+      "required": true,
+      "default": "https://api.bmkt.ericjypark.com"
+    },
+    {
+      "name": "apiToken",
+      "title": "API Token",
+      "description": "Bookmarket API token with bookmarks:read for search and bookmarks:write for adding bookmarks.",
+      "type": "password",
+      "required": true
+    }
+  ],
+  "scripts": {
+    "dev": "ray develop",
+    "build": "ray build -e dist",
+    "lint": "ray lint"
+  },
+  "dependencies": {
+    "@raycast/api": "^1.104.17",
+    "react": "19.0.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^2.1.1",
+    "@types/node": "22.19.17",
+    "@types/react": "19.0.10",
+    "typescript": "^5.7.3"
+  }
+}

@@ -23,6 +23,7 @@ import {
   publicAppHost,
   publicAppProtocol,
 } from '../utils/public-url';
+import { ApiTokenSettings } from './api-token-settings';
 import { UserProfile } from './user-profile';
 
 export default function UserSettingsDialog({
@@ -168,7 +169,7 @@ export default function UserSettingsDialog({
 
   return (
     <motion.div
-      className={'relative w-full max-w-md rounded-xl bg-white p-0'}
+      className={'relative flex max-h-[calc(100vh-2rem)] w-full max-w-xl flex-col rounded-xl bg-white p-0'}
       onClick={e => {
         e.stopPropagation();
       }}
@@ -259,6 +260,7 @@ export default function UserSettingsDialog({
             </div> */}
           </form>
         </div>
+        <ApiTokenSettings />
       </div>
       <DialogFooter className='border-t px-6 py-4'>
         <Button type='button' variant='outline' onClick={handleCancelClick} disabled={isPending}>

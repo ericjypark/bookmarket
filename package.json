@@ -4,8 +4,11 @@
   "packageManager": "pnpm@8.9.2",
   "scripts": {
     "dev:web": "pnpm --filter @bookmarket/web dev",
+    "dev:raycast": "pnpm --dir apps/raycast dev",
     "build:web": "pnpm --filter @bookmarket/web build",
+    "build:raycast": "pnpm --dir apps/raycast build",
     "lint:web": "pnpm --filter @bookmarket/web lint",
+    "lint:raycast": "pnpm --dir apps/raycast lint",
     "start:web": "pnpm --filter @bookmarket/web start",
     "build:api": "cd services/api && mvn clean package",
     "start:api": "cd services/api && java -jar target/api-0.1.0-SNAPSHOT.jar",
