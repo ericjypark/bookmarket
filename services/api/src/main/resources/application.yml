@@ -38,7 +38,7 @@ bookmarket:
     audience: ${BOOKMARKET_AUTH_AUDIENCE:bookmarket-web}
     secret: ${BOOKMARKET_AUTH_SECRET:dev-only-bookmarket-v2-secret-change-before-production}
     access-token-ttl-seconds: ${BOOKMARKET_ACCESS_TOKEN_TTL_SECONDS:900}
-    refresh-token-ttl-seconds: ${BOOKMARKET_REFRESH_TOKEN_TTL_SECONDS:3024000}
+    refresh-token-ttl-seconds: ${BOOKMARKET_REFRESH_TOKEN_TTL_SECONDS:2592000}
     google-client-id: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:}
     google-client-secret: ${GOOGLE_CLIENT_SECRET:}
     github-client-id: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:}

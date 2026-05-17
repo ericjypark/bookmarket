@@ -4,11 +4,15 @@ import * as Sentry from '@sentry/nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { type TokenResponse } from '../interfaces/token.interface';
+import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  getAccessTokenCookieOptions,
+  getExpiredAuthCookieOptions,
+  getRefreshTokenCookieOptions,
+  REFRESH_TOKEN_COOKIE_NAME,
+} from '../utils/auth-cookies';
 import { http } from '../utils/http';
 import { getMe } from './user.action';
-
-const ACCESS_TOKEN_COOKIE_NAME = 'access_token';
-const REFRESH_TOKEN_COOKIE_NAME = 'refresh_token';
 
 export const refreshNewAccessToken = async () => {
   try {
@@ -48,42 +52,14 @@ export const setAccessToken = async (accessToken: string) => {
   'use server';
   const cookieStore = await cookies();
 
-  // Check if we're in a container/localhost environment
-  const isLocalhost =
-    process.env.NODE_ENV === 'development' ||
-    process.env.NEXT_PUBLIC_DOMAIN?.includes('localhost') ||
-    !process.env.NEXT_PUBLIC_DOMAIN;
-
-  const cookieOptions = {
-    maxAge: 604800, // 7 days
-    path: '/',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' && !isLocalhost,
-    sameSite: 'lax' as const,
-    domain: isLocalhost ? undefined : `.${process.env.NEXT_PUBLIC_DOMAIN}`,
-  };
-
-  cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, accessToken, cookieOptions);
+  cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, accessToken, getAccessTokenCookieOptions());
 };
 
 export const setRefreshToken = async (refreshToken: string) => {
   'use server';
   const cookieStore = await cookies();
 
-  // Check if we're in a container/localhost environment
-  const isLocalhost =
-    process.env.NODE_ENV === 'development' ||
-    process.env.NEXT_PUBLIC_DOMAIN?.includes('localhost') ||
-    !process.env.NEXT_PUBLIC_DOMAIN;
-
-  cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, refreshToken, {
-    maxAge: 3024000, // 35 days
-    path: '/',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production' && !isLocalhost,
-    sameSite: 'lax',
-    domain: isLocalhost ? undefined : `.${process.env.NEXT_PUBLIC_DOMAIN}`,
-  });
+  cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, refreshToken, getRefreshTokenCookieOptions());
 };
 
 export const getAccessToken = async () => {
@@ -125,11 +101,11 @@ export const signOut = async () => {
         });
     }
 
-    cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME);
-    cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME);
+    cookieStore.set(ACCESS_TOKEN_COOKIE_NAME, '', getExpiredAuthCookieOptions());
+    cookieStore.set(REFRESH_TOKEN_COOKIE_NAME, '', getExpiredAuthCookieOptions());
   } catch (e) {
     Sentry.captureException(e);
   }
-  
+
   redirect('/');
 };

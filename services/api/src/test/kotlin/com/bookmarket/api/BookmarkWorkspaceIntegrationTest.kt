@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -42,6 +43,8 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
+import java.time.Duration
+import java.time.Instant
 import java.util.UUID
 
 @SpringBootTest
@@ -551,6 +554,30 @@ class BookmarkWorkspaceIntegrationTest {
             status { isUnauthorized() }
             jsonPath("$.error.code") { value("AUTH_INVALID") }
         }
+    }
+
+    @Test
+    fun `refresh tokens are issued with a one month ttl`() {
+        val issuedAfter = Instant.now()
+        val auth = signup()
+
+        val expiresAt = jdbcTemplate.queryForObject(
+            """
+            SELECT expires_at
+            FROM refresh_tokens
+            WHERE user_id = ?::uuid AND revoked_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT 1
+            """.trimIndent(),
+            java.sql.Timestamp::class.java,
+            auth.userId
+        ).toInstant()
+
+        val ttl = Duration.between(issuedAfter, expiresAt)
+        assertTrue(
+            ttl >= Duration.ofDays(29) && ttl <= Duration.ofDays(31),
+            "Refresh token should live for about one month, got ${ttl.toDays()} days"
+        )
     }
 
     @Test

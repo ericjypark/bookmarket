@@ -74,6 +74,14 @@ resource "kubernetes_deployment_v1" "web" {
             value = "http://${var.api_service_name}:8080"
           }
           env {
+            name  = "NEXT_PUBLIC_DOMAIN"
+            value = var.domain
+          }
+          env {
+            name  = "BOOKMARKET_COOKIE_DOMAIN"
+            value = var.domain
+          }
+          env {
             name = "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
             value_from {
               secret_key_ref {

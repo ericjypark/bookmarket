@@ -1,7 +1,121 @@
 import * as Sentry from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
-import { isAuthenticated, refreshNewAccessToken } from '~/app/_common/actions/auth.action';
+import { type TokenResponse } from '~/app/_common/interfaces/token.interface';
+import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  getAccessTokenCookieOptions,
+  getExpiredAuthCookieOptions,
+  getRefreshTokenCookieOptions,
+  REFRESH_TOKEN_COOKIE_NAME,
+} from '~/app/_common/utils/auth-cookies';
 import { authRelatedRoutes, unauthenticatedRoutes } from '~/path';
+
+const apiBaseUrl = () =>
+  (process.env.BOOKMARKET_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080').replace(
+    /\/$/,
+    ''
+  );
+
+const matchesRoute = (pathname: string, route: string) =>
+  route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`);
+
+const cookieHeaderWithTokens = (cookieHeader: string | null, tokens: TokenResponse) => {
+  const cookies = new Map<string, string>();
+
+  cookieHeader
+    ?.split(';')
+    .map(cookie => cookie.trim())
+    .filter(Boolean)
+    .forEach(cookie => {
+      const separatorIndex = cookie.indexOf('=');
+      if (separatorIndex <= 0) return;
+      cookies.set(cookie.slice(0, separatorIndex), cookie.slice(separatorIndex + 1));
+    });
+
+  cookies.set(ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken);
+  cookies.set(REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken);
+
+  return Array.from(cookies.entries())
+    .map(([name, value]) => `${name}=${value}`)
+    .join('; ');
+};
+
+const setAuthCookies = (response: NextResponse, tokens: TokenResponse) => {
+  response.cookies.set(ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken, getAccessTokenCookieOptions());
+  response.cookies.set(REFRESH_TOKEN_COOKIE_NAME, tokens.refreshToken, getRefreshTokenCookieOptions());
+};
+
+const clearAuthCookies = (response: NextResponse) => {
+  response.cookies.set(ACCESS_TOKEN_COOKIE_NAME, '', getExpiredAuthCookieOptions());
+  response.cookies.set(REFRESH_TOKEN_COOKIE_NAME, '', getExpiredAuthCookieOptions());
+};
+
+const nextWithAuthCookies = (request: NextRequest, tokens: TokenResponse) => {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('cookie', cookieHeaderWithTokens(request.headers.get('cookie'), tokens));
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+  setAuthCookies(response, tokens);
+  return response;
+};
+
+const redirectWithAuthCookies = (url: URL, tokens: TokenResponse) => {
+  const response = NextResponse.redirect(url);
+  setAuthCookies(response, tokens);
+  return response;
+};
+
+const redirectToLogin = (request: NextRequest) => {
+  const response = NextResponse.redirect(new URL('/login', request.url));
+  clearAuthCookies(response);
+  return response;
+};
+
+const isRequestAuthenticated = async (request: NextRequest) => {
+  const cookieHeader = request.headers.get('cookie');
+  if (!cookieHeader) return false;
+
+  try {
+    const response = await fetch(`${apiBaseUrl()}/api/v1/users/me`, {
+      headers: {
+        cookie: cookieHeader,
+      },
+      cache: 'no-store',
+    });
+
+    return response.ok;
+  } catch (error) {
+    Sentry.captureException(error);
+    return false;
+  }
+};
+
+const refreshSession = async (request: NextRequest): Promise<TokenResponse | null> => {
+  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
+  if (!refreshToken) return null;
+
+  try {
+    const response = await fetch(`${apiBaseUrl()}/api/v1/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+      cache: 'no-store',
+    });
+
+    if (!response.ok) return null;
+
+    return (await response.json()) as TokenResponse;
+  } catch (error) {
+    Sentry.captureException(error);
+    return null;
+  }
+};
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host');
@@ -48,31 +162,25 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(newUrl);
   }
 
-  let auth: boolean | undefined;
+  const isAuthRelatedRoute = authRelatedRoutes.some(route => matchesRoute(request.nextUrl.pathname, route));
+  const isUnauthenticatedRoute = unauthenticatedRoutes.some(route => matchesRoute(request.nextUrl.pathname, route));
 
-  if (authRelatedRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
-    auth = await isAuthenticated();
-    if (auth) return NextResponse.redirect(new URL('/home', request.url));
+  if (isAuthRelatedRoute) {
+    if (await isRequestAuthenticated(request)) return NextResponse.redirect(new URL('/home', request.url));
+
+    const tokens = await refreshSession(request);
+    if (tokens) return redirectWithAuthCookies(new URL('/home', request.url), tokens);
   }
 
-  if (unauthenticatedRoutes.some(route => request.nextUrl.pathname.startsWith(route))) return NextResponse.next();
+  if (isUnauthenticatedRoute) return NextResponse.next();
 
-  if (!auth) auth = await isAuthenticated();
+  if (await isRequestAuthenticated(request)) return NextResponse.next();
 
-  if (!auth) {
-    try {
-      const tokens = await refreshNewAccessToken();
+  const tokens = await refreshSession(request);
 
-      if (!tokens) return NextResponse.redirect(new URL('/login', request.url));
+  if (!tokens) return redirectToLogin(request);
 
-      return NextResponse.next();
-    } catch (e) {
-      Sentry.captureException(e);
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-  }
-
-  return NextResponse.next();
+  return nextWithAuthCookies(request, tokens);
 }
 
 export const config = {

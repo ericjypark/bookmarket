@@ -159,6 +159,14 @@ resource "kubernetes_deployment_v1" "api" {
             }
           }
           env {
+            name  = "BOOKMARKET_ACCESS_TOKEN_TTL_SECONDS"
+            value = "900"
+          }
+          env {
+            name  = "BOOKMARKET_REFRESH_TOKEN_TTL_SECONDS"
+            value = "2592000"
+          }
+          env {
             name = "NEXT_PUBLIC_GOOGLE_CLIENT_ID"
             value_from {
               secret_key_ref {
