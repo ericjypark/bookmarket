@@ -12,7 +12,7 @@
 - Bookmark: private saved URL owned by a user.
 - Bookmark metadata: derived data fetched asynchronously.
 - Collection: ordered set of bookmarks.
-- Category: lightweight organization label for v1 parity.
+- Category: lightweight organization label owned by a user.
 - Public profile: user-facing share surface, reachable by subdomain.
 
 ## Metadata Status
@@ -28,7 +28,7 @@ The API stores short-lived metadata job status records in Redis whenever a bookm
 
 ## Implemented V2 Increment
 
-- Authenticated category CRUD is backed by Postgres and preserves v1 ordering by `created_at ASC`.
+- Authenticated category CRUD is backed by Postgres and preserves stable ordering by `created_at ASC`.
 - Authenticated bookmark CRUD is backed by Postgres and returns DTOs ordered by `created_at DESC`.
 - Bookmark creation normalizes URLs, creates a `PENDING` metadata row, and returns before metadata fetch completes.
 - Bookmark creation and metadata refetch support Redis-backed `Idempotency-Key` replay protection.

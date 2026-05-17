@@ -1,8 +1,11 @@
 # Bookmarket Web
 
-Next.js App Router shell for the Bookmarket v2 web client.
+Next.js App Router client for Bookmarket.
 
-The v2 implementation must preserve v1 routes, copy, spacing, and interaction behavior. Use the Playwright baselines in `tests/playwright` before replacing this shell with parity views.
+The web app owns the visible bookmark workspace, authentication pages, public
+profiles, and metadata-loading states. Bookmark creation should render
+optimistically while the API and metadata worker complete asynchronous metadata
+fetching.
 
 ## Commands
 

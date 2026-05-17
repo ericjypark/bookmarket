@@ -53,7 +53,7 @@ Images are expected to be GHCR-ready `linux/arm64` images:
 - `ghcr.io/ericjypark/bookmarket-v2-metadata-worker:<tag>`
 
 The deployment flow should build and push ARM64 images before running `terraform plan`.
-For the web image, pass `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `NEXT_PUBLIC_GITHUB_CLIENT_ID`, and `NEXT_PUBLIC_GITHUB_REDIRECT_URI` as Docker build args so the copied v1 OAuth client code is compiled with production public IDs.
+For the web image, pass `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `NEXT_PUBLIC_GITHUB_CLIENT_ID`, and `NEXT_PUBLIC_GITHUB_REDIRECT_URI` as Docker build args so the OAuth client code is compiled with production public IDs.
 
 Local ARM64 build checks:
 
@@ -65,17 +65,17 @@ pnpm image:build:metadata-worker
 
 The repository also includes `.github/workflows/images.yml`, which builds and pushes these GHCR images for `linux/arm64`.
 
-Run the image workflow guard before a release:
+Run the image workflow guard before deployment:
 
 ```bash
 pnpm images:verify
 ```
 
-It fails if `.github/workflows/images.yml`, the Dockerfiles, `package.json`, or Terraform defaults stop agreeing on the three GHCR `linux/arm64` service images. It also checks that the web image still receives the public OAuth build args required by the copied v1 OAuth UI flow.
+It fails if `.github/workflows/images.yml`, the Dockerfiles, `package.json`, or Terraform defaults stop agreeing on the three GHCR `linux/arm64` service images. It also checks that the web image still receives the public OAuth build args required by the OAuth UI flow.
 
 ## Manifest Guard
 
-Run the static manifest guard before a Pi release:
+Run the static manifest guard before a Pi deployment:
 
 ```bash
 pnpm infra:pi:verify

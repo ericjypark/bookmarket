@@ -6,12 +6,12 @@ Machine-readable contract: `docs/contracts/openapi.json`.
 
 ## Conventions
 
-- Base path: `/api/v1` for v2. The Next.js app can proxy this so visible v1 routes remain unchanged.
+- Base path: `/api/v1`.
 - Auth: browser session cookies for web, scoped API tokens for Raycast and future clients.
 - JSON timestamps: ISO 8601 UTC.
 - IDs: UUID strings.
 - Errors: see `docs/contracts/errors.md`.
-- Idempotent mutations accept `Idempotency-Key` where retry behavior matters. V2 currently backs bookmark creation and metadata refetch idempotency with Redis.
+- Idempotent mutations accept `Idempotency-Key` where retry behavior matters. Bookmarket currently backs bookmark creation and metadata refetch idempotency with Redis.
 - Redis operational state is intentionally TTL-bound: auth rate limits, OAuth state/PKCE verifier values, idempotency records, metadata job status, and hot public profile responses.
 
 ## DTOs
@@ -75,7 +75,7 @@ Machine-readable contract: `docs/contracts/openapi.json`.
 | `POST` | `/api/v1/auth/logout` | session | empty | `204` |
 | `GET` | `/api/v1/signup-slots` | none | none | `{ "remaining": number, "total": 100, "canSignUp": boolean }` |
 
-OAuth verification happens server-side against the provider. Client-supplied OAuth profile data is not accepted or trusted. The v2 web app mints OAuth `state` through `/auth/oauth/state` before the provider flow and the API consumes that state exactly once during provider login. State creation requires Redis-backed operational state to be enabled.
+OAuth verification happens server-side against the provider. Client-supplied OAuth profile data is not accepted or trusted. The web app mints OAuth `state` through `/auth/oauth/state` before the provider flow and the API consumes that state exactly once during provider login. State creation requires Redis-backed operational state to be enabled.
 
 ## Users And Public Profiles
 
@@ -116,7 +116,7 @@ Creation must commit the bookmark and publish `metadata.fetch.requested` without
 
 ## Hidden Collections And Marketplace Foundation
 
-These endpoints are contract-ready for future product work and must not be linked from the v1 parity UI.
+These endpoints are contract-ready for future product work and must not be linked from the current bookmark workspace UI.
 
 | Method | Path | Auth | Request | Response |
 | --- | --- | --- | --- | --- |
@@ -144,7 +144,7 @@ Publishing is allowed only for public or unlisted collections. Listing versions 
 | `GET` | `/api/v1/search/bookmarks?q=` | session or API token `bookmarks:read` | query | `BookmarkDto[]` |
 | `POST` | `/api/v1/ops/search/bookmarks/rebuild` | `X-Bookmarket-Ops-Token` | empty | `{ "indexed": number }` |
 
-The v1 command menu starts by preserving client-side filtering. Server search must match visible behavior before replacing it.
+Server search must match command-menu title and URL filtering behavior.
 Elasticsearch is a derived index. The rebuild endpoint is disabled with `404` when `BOOKMARKET_SEARCH_REBUILD_TOKEN` is blank, and otherwise reindexes active Postgres bookmarks without mutating bookmark data.
 
 ## Raycast-Ready Tokens

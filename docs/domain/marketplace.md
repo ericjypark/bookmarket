@@ -1,6 +1,6 @@
 # Marketplace Domain
 
-Marketplace behavior is not part of the v1 parity milestone, but the schema should not block it.
+Marketplace behavior is not part of the active web UI, but the schema should not block it.
 
 ## Future Concepts
 
@@ -32,4 +32,4 @@ Recommended relationship:
 - Publishing a listing creates an immutable `listing_versions.snapshot` JSON document from the collection and its bookmark display fields.
 - Private collections cannot be published and are not readable through public collection endpoints.
 - Free listings can be purchased immediately and create a `PURCHASE` access grant; paid checkout returns `402` until a payment provider is configured.
-- These APIs are intentionally hidden from the v1 parity UI.
+- These APIs are intentionally hidden from the current bookmark workspace UI.

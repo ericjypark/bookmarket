@@ -49,29 +49,8 @@ jobs:
       - name: Validate architecture support
         run: pnpm check:architecture-support
 
-      - name: Check v1 UI source parity
-        run: pnpm check:web-ui-parity
-
-      - name: Validate v1 parity checklist
-        run: pnpm check:v1-parity-checklist
-
-      - name: Validate completion audit
-        run: pnpm check:completion-audit
-
-      - name: Validate production release docs
-        run: pnpm check:production-release-docs
-
-      - name: Validate production context guard
-        run: pnpm check:production-context-guard
-
       - name: Validate CI workflow guard
         run: pnpm check:ci-workflow
-
-      - name: Validate Playwright safety guards
-        run: pnpm check:playwright-safety
-
-      - name: Verify v1 visual baseline matrix
-        run: pnpm test:v1-visual:verify
 
       - name: Lint web
         run: pnpm lint:web
@@ -85,56 +64,24 @@ jobs:
       - name: Test metadata worker
         run: pnpm test:metadata-worker
 
-      - name: Compile Playwright parity specs
-        run: |
-          pnpm test:v1-auth-parity
-          pnpm test:v1-interactions
-          pnpm test:v1-routing-parity
-
       - name: Verify Docker Compose stack
         run: pnpm compose:verify
 
       - name: Validate Docker Compose config
         run: pnpm compose:config
 
-      - name: Validate production release scripts
+      - name: Validate production operations scripts
         run: |
           node --check scripts/production-smoke-check.mjs
-          node --check scripts/oauth-provider-smoke.mjs
-          node --check scripts/audit-oauth-provider-evidence.mjs
-          node --check scripts/prepare-oauth-provider-profile.mjs
-          node --check scripts/production-test-account-smoke.mjs
-          node --check scripts/authenticated-production-oracle-smoke.mjs
-          node --check scripts/production-migration-cutover.mjs
           node --check scripts/production-postgres-backup.mjs
           node --check scripts/production-postgres-restore-check.mjs
-          node --check scripts/production-disposable-cleanup-check.mjs
-          node --check scripts/lib/completion-audit-status.mjs
-          node --check scripts/lib/release-signoffs.mjs
-          node --check scripts/lib/release-blockers.mjs
-          node --check scripts/lib/route-targets.mjs
-          node --check scripts/validate-release-signoffs.mjs
-          node --check scripts/validate-release-blockers.mjs
-          node --check scripts/validate-release-readiness.mjs
-          node --check scripts/validate-migration-safety.mjs
-          node --check scripts/validate-completion-audit.mjs
-          node --check scripts/release-readiness-check.mjs
-          pnpm release:signoffs:verify
-          pnpm release:blockers:verify
-          pnpm release:readiness:verify
-          pnpm migration:safety:verify
+          node --check scripts/production-context-preflight.mjs
+          node --check scripts/external-public-endpoint-check.mjs
           pnpm backup:production:dry-run
           pnpm backup:production:restore-check:dry-run
           pnpm smoke:production:dry-run
-          pnpm smoke:oauth-provider:profile:prepare:dry-run
-          rm -rf .tmp/ci-oauth-provider-profile
-          BOOKMARKET_OAUTH_PROVIDER_USER_DATA_DIR=.tmp/ci-oauth-provider-profile pnpm smoke:oauth-provider:profile:prepare
-          BOOKMARKET_WEB_URL=http://localhost:3000 BOOKMARKET_API_URL=http://localhost:8080 BOOKMARKET_OAUTH_PROVIDER_SMOKE_APPROVED=1 BOOKMARKET_CONFIRM_DEDICATED_TEST_ACCOUNT=1 BOOKMARKET_OAUTH_APP_LABEL='staging OAuth app ci preflight' BOOKMARKET_OAUTH_TEST_ACCOUNT_LABEL='oauth-provider-ci@example.com' BOOKMARKET_OAUTH_EXPECTED_EMAIL='oauth-provider-ci@example.com' BOOKMARKET_OAUTH_PROVIDER_USER_DATA_DIR=.tmp/ci-oauth-provider-profile BOOKMARKET_CONFIRM_DEDICATED_PROVIDER_BROWSER_PROFILE=1 pnpm smoke:oauth-provider:preflight
-          rm -rf .tmp/ci-oauth-provider-profile
-          pnpm smoke:oauth-provider:evidence-audit
-          BOOKMARKET_WEB_URL=http://localhost:3000 BOOKMARKET_API_URL=http://localhost:8080 pnpm smoke:oauth-provider:route-targets
-          pnpm smoke:production:cleanup-check:dry-run
-          node scripts/production-smoke-check.mjs --dry-run --require-restarts --include-restarts --require-test-account --require-authenticated-oracle
+          pnpm preflight:production-context:dry-run
+          pnpm public:endpoints:external:dry-run
 
       - name: Validate Terraform
         run: |

@@ -1,6 +1,6 @@
 # System Overview
 
-Bookmarket v2 separates the user-visible web app from core backend systems while preserving v1 behavior.
+Bookmarket separates the user-visible web app from core backend systems.
 
 ## Services
 
@@ -14,7 +14,9 @@ Bookmarket v2 separates the user-visible web app from core backend systems while
 
 ## Product Rule
 
-The first v2 milestone is v1 parity. The architecture may be new, but the user-facing product must behave the same.
+Bookmark creation and other user-facing writes should acknowledge quickly.
+Slower derived work such as metadata fetching, search indexing, and cache
+refreshing runs asynchronously behind the visible product.
 
 ## Deployment Target
 

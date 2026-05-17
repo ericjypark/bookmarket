@@ -39,7 +39,7 @@ async function main() {
 
   section('Bookmarket External Public Endpoint Check');
   line('Read-only public health evidence. Sends only public URLs to check-host.net; no cookies, tokens, or secrets are sent.');
-  line('This helper is not a production-smoke, OAuth, migration, or cutover signoff by itself.');
+  line('This helper is not a production-smoke result by itself.');
   line(`Max nodes per endpoint: ${maxNodes}`);
   line(`Required successful external nodes per endpoint: ${minSuccesses}`);
 
@@ -66,7 +66,7 @@ async function main() {
     fail(`External public endpoint check failed for ${failures.length} endpoint(s).`);
   }
 
-  line('External public endpoint check passed. Record these results as public-health evidence only; final release readiness still requires the real production smoke and migration/cutover signoffs.');
+  line('External public endpoint check passed. Record these results as public-health evidence only; production readiness still requires the real production smoke.');
 }
 
 function usage() {
@@ -76,7 +76,7 @@ Checks BOOKMARKET_WEB_URL /health, BOOKMARKET_API_URL /health, and
 BOOKMARKET_API_URL /actuator/health/readiness from external check-host.net HTTP
 nodes. This is useful when the release operator is on the same LAN as the Pi
 and local public-IP curls fail because of NAT loopback. It does not replace
-pnpm smoke:production:release or pnpm migration:production-cutover.
+pnpm smoke:production.
 `);
 }
 

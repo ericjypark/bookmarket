@@ -3,7 +3,7 @@
   "info": {
     "title": "Bookmarket API",
     "version": "0.1.0",
-    "description": "Stable DTO contract for Bookmarket v2 web, future Raycast, and future marketplace clients."
+    "description": "Stable DTO contract for the Bookmarket web app, future Raycast clients, and future marketplace clients."
   },
   "servers": [
     {

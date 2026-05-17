@@ -15,7 +15,7 @@ Elasticsearch is a derived index used for:
 Implemented personal bookmark search:
 - `GET /api/v1/search/bookmarks?q=`
 - Authenticated user scope only.
-- Matches v1 command-menu behavior by filtering title and URL substrings.
+- Matches command-menu behavior by filtering title and URL substrings.
 - Orders results newest first, matching the bookmark list order.
 - Uses Postgres fallback by default and when Elasticsearch is unavailable.
 - When `BOOKMARKET_SEARCH_ELASTICSEARCH_ENABLED=true`, bookmark create/update/delete calls maintain the derived Elasticsearch document.

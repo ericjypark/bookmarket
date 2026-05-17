@@ -5,7 +5,7 @@
 Path: `apps/web`
 
 Responsibilities:
-- Render v1-compatible UI.
+- Render the bookmark workspace, auth pages, and public profiles.
 - Call the API through stable contracts.
 - Keep Raycast and marketplace assumptions out of UI internals.
 

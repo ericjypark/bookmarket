@@ -3,21 +3,12 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
-import {
-  missingAuthenticatedProdOracleFields,
-  missingBackupSignoffFields,
-  missingOAuthSmokeSignoffFields,
-  missingProductionTestAccountSignoffFields
-} from './lib/release-signoffs.mjs';
 import { productionKubeContextBlocker } from './lib/production-context.mjs';
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has('--dry-run');
 const includeRestarts = args.has('--include-restarts') || process.env.BOOKMARKET_INCLUDE_RESTARTS === '1';
 const requireRestarts = args.has('--require-restarts') || process.env.BOOKMARKET_REQUIRE_RESTARTS === '1';
-const requireTestAccount = args.has('--require-test-account') || process.env.BOOKMARKET_REQUIRE_TEST_ACCOUNT_SMOKE === '1';
-const requireAuthenticatedOracle =
-  args.has('--require-authenticated-oracle') || process.env.BOOKMARKET_REQUIRE_AUTHENTICATED_ORACLE === '1';
 
 const namespace = process.env.BOOKMARKET_KUBE_NAMESPACE ?? 'bookmarket';
 const secretName = process.env.BOOKMARKET_APP_SECRET_NAME ?? 'bookmarket-app-secrets';
@@ -27,12 +18,6 @@ const expectedContext = process.env.BOOKMARKET_PROD_KUBE_CONTEXT;
 const webUrl = trimTrailingSlash(process.env.BOOKMARKET_WEB_URL ?? 'https://bmkt.ericjypark.com');
 const apiUrl = trimTrailingSlash(process.env.BOOKMARKET_API_URL ?? 'https://api.bmkt.ericjypark.com');
 const publicProfileUsername = process.env.BOOKMARKET_PUBLIC_PROFILE_USERNAME;
-const runPublicVisual = process.env.BOOKMARKET_RUN_PUBLIC_VISUAL === '1';
-const oauthSmokeSignoff = (process.env.BOOKMARKET_OAUTH_SMOKE_SIGNOFF ?? '').trim();
-const backupSignoff = (process.env.BOOKMARKET_BACKUP_SIGNOFF ?? '').trim();
-const testAccountSignoff = (process.env.BOOKMARKET_TEST_ACCOUNT_SMOKE_SIGNOFF ?? '').trim();
-const authenticatedOracleSignoff = (process.env.BOOKMARKET_AUTHENTICATED_PROD_ORACLE_SIGNOFF ?? '').trim();
-const releaseDate = (process.env.BOOKMARKET_RELEASE_DATE ?? localDate(new Date())).trim();
 
 const requiredSecretKeys = ['database-user', 'database-password', 'jwt-secret'];
 const requiredTlsSecretKeys = ['tls.crt', 'tls.key'];
@@ -83,10 +68,6 @@ function main() {
     }
   }
 
-  assertOAuthProviderSmokeSignoff();
-  assertBackupSignoff();
-  assertTestAccountSmokeSignoff();
-  assertAuthenticatedProdOracleSignoff();
   assertRestartRequirement();
 
   run('Terraform init', 'terraform', ['-chdir=infra/terraform/pi', 'init', '-backend=false']);
@@ -195,16 +176,6 @@ function main() {
   ]);
   runSearchRebuildSmoke(appSecret);
 
-  if (runPublicVisual) {
-    run('Read-only public visual baseline', 'pnpm', ['test:v1-visual:public'], {
-      env: {
-        BOOKMARKET_BASE_URL: webUrl
-      }
-    });
-  } else {
-    info('Skipping Playwright public visual baseline; set BOOKMARKET_RUN_PUBLIC_VISUAL=1 to enable it.');
-  }
-
   if (includeRestarts) {
     if (!dryRun && process.env.BOOKMARKET_RESTART_SMOKE_APPROVED !== '1') {
       fail('Restart smoke requires BOOKMARKET_RESTART_SMOKE_APPROVED=1 because it restarts production pods.');
@@ -216,91 +187,9 @@ function main() {
 
   if (includeRestarts) {
     info('Full production smoke check completed with restart/PVC survival coverage.');
-    if (!dryRun && requireTestAccount && requireAuthenticatedOracle) {
-      info('After this real full release smoke, set BOOKMARKET_PRODUCTION_SMOKE_SIGNOFF with this template:');
-      info(
-        `BOOKMARKET_PRODUCTION_SMOKE_SIGNOFF='${releaseDate}: pnpm smoke:production:release passed on Raspberry Pi k3s production context ${expectedContext}; web health, API readiness, pod rollout and PVC checks passed; Postgres pg_isready, Redis PONG, Kafka topics, Elasticsearch health, and restart/PVC survival completed'`
-      );
-    }
   } else {
     info('Basic production smoke check completed; restart/PVC survival is not covered.');
   }
-}
-
-function assertOAuthProviderSmokeSignoff() {
-  if (dryRun) {
-    info(
-      'OAuth provider smoke signoff gate: set BOOKMARKET_OAUTH_SMOKE_SIGNOFF after Google and GitHub pass with the local/staging OAuth app, a dedicated provider test account or explicitly approved operator Chrome credentials, v2 route target proof, avatar/profile menu evidence, and /api/v1/users/me identity confirmation.'
-    );
-    return;
-  }
-
-  const missingFields = missingOAuthSmokeSignoffFields(oauthSmokeSignoff);
-  if (missingFields.length > 0) {
-    fail(
-      `Set BOOKMARKET_OAUTH_SMOKE_SIGNOFF to a release-note summary after provider smoke passes. Missing: ${missingFields.join(', ')}.`
-    );
-  }
-
-  info('OAuth provider smoke signoff accepted.');
-}
-
-function assertBackupSignoff() {
-  if (dryRun) {
-    info('Database backup signoff gate: set BOOKMARKET_BACKUP_SIGNOFF after the pre-switch backup exists and restore-check or pg_restore rehearsal passes.');
-    return;
-  }
-
-  const missingFields = missingBackupSignoffFields(backupSignoff);
-  if (missingFields.length > 0) {
-    fail(`Set BOOKMARKET_BACKUP_SIGNOFF to a backup release-note summary before production smoke. Missing: ${missingFields.join(', ')}.`);
-  }
-
-  info('Database backup signoff accepted.');
-}
-
-function assertTestAccountSmokeSignoff() {
-  if (!requireTestAccount) {
-    return;
-  }
-
-  if (dryRun) {
-    info(
-      'Test-account smoke signoff gate: set BOOKMARKET_TEST_ACCOUNT_SMOKE_SIGNOFF after disposable bookmark/category CRUD, metadata/refetch, cleanup, and no-real-user-data checks pass.'
-    );
-    return;
-  }
-
-  const missingFields = missingProductionTestAccountSignoffFields(testAccountSignoff);
-  if (missingFields.length > 0) {
-    fail(
-      `Set BOOKMARKET_TEST_ACCOUNT_SMOKE_SIGNOFF to a production test-account smoke summary. Missing: ${missingFields.join(', ')}.`
-    );
-  }
-
-  info('Production test-account smoke signoff accepted.');
-}
-
-function assertAuthenticatedProdOracleSignoff() {
-  if (!requireAuthenticatedOracle) {
-    return;
-  }
-
-  if (dryRun) {
-    info(
-      'Authenticated production-oracle signoff gate: set BOOKMARKET_AUTHENTICATED_PROD_ORACLE_SIGNOFF after pnpm smoke:authenticated-prod-oracle passes read-only v1 production inspection for /home, bookmark list layout, category filters, command menu, profile/subdomain UI, and public profile behavior.'
-    );
-    return;
-  }
-
-  const missingFields = missingAuthenticatedProdOracleFields(authenticatedOracleSignoff);
-  if (missingFields.length > 0) {
-    fail(
-      `Set BOOKMARKET_AUTHENTICATED_PROD_ORACLE_SIGNOFF to a read-only authenticated production-oracle summary. Missing: ${missingFields.join(', ')}.`
-    );
-  }
-
-  info('Authenticated production-oracle signoff accepted.');
 }
 
 function assertRestartRequirement() {
@@ -517,18 +406,6 @@ function hostnameFromUrl(value) {
   } catch {
     return '';
   }
-}
-
-function localDate(date) {
-  const timeZone = process.env.TZ || 'Asia/Seoul';
-  const parts = new Intl.DateTimeFormat('en', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).formatToParts(date);
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-  return `${values.year}-${values.month}-${values.day}`;
 }
 
 function shellQuote(value) {

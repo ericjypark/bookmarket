@@ -6,7 +6,7 @@ Accepted.
 
 ## Context
 
-Bookmarket v2 must preserve the v1 bookmark UI exactly while leaving a clean backend path for future marketplace features. A private bookmark, a curated collection, a marketplace listing, a purchased version, and a user's access grant are different concepts with different visibility and ownership rules.
+Bookmarket should keep the bookmark workspace simple while leaving a clean backend path for future marketplace features. A private bookmark, a curated collection, a marketplace listing, a purchased version, and a user's access grant are different concepts with different visibility and ownership rules.
 
 ## Decision
 
@@ -15,10 +15,10 @@ Bookmarket v2 must preserve the v1 bookmark UI exactly while leaving a clean bac
 - Publish listings from public or unlisted collections only.
 - Store purchases against immutable listing versions, not mutable collection rows.
 - Store access grants separately from bookmark ownership.
-- Keep marketplace routes hidden from the v1 parity UI until product work explicitly exposes them.
+- Keep marketplace routes hidden from the bookmark workspace UI until product work explicitly exposes them.
 
 ## Consequences
 
-- Public profile reads remain v1-compatible and are separate from marketplace discovery.
+- Public profile reads remain separate from marketplace discovery.
 - Marketplace publication creates a versioned snapshot so buyers keep access to what they purchased even if the creator later edits the source collection.
 - Future paid checkout can attach provider identifiers to `purchases` without reworking collection/listing ownership.

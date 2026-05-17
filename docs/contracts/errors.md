@@ -20,7 +20,7 @@ All API errors return a DTO. Services must not expose framework exceptions, pers
 ## Fields
 
 - `error.code`: stable machine-readable string.
-- `error.message`: visible-safe message. It may match v1 copy where the UI depends on that behavior.
+- `error.message`: visible-safe message.
 - `error.requestId`: request correlation id.
 - `error.details`: optional object for field-level errors or retry metadata.
 
@@ -51,7 +51,7 @@ All API errors return a DTO. Services must not expose framework exceptions, pers
 | `PUBLIC_PROFILE_PRIVATE` | 403 | Public profile exists but is private. |
 | `USERNAME_TAKEN` | 409 | Profile slug/subdomain conflict. |
 | `USERNAME_NOT_ALLOWED` | 403 | Reserved profile slug/subdomain. |
-| `SIGNUP_SLOTS_FULL` | 403 | V1 slot limit reached. |
+| `SIGNUP_SLOTS_FULL` | 403 | Signup slot limit reached. |
 | `BOOKMARK_NOT_FOUND` | 404 | Bookmark does not exist for the current owner. |
 | `CATEGORY_NOT_FOUND` | 404 | Category does not exist for the current owner. |
 | `CATEGORY_NAME_CONFLICT` | 409 | Duplicate category name for a user. |
@@ -60,9 +60,9 @@ All API errors return a DTO. Services must not expose framework exceptions, pers
 | `METADATA_FETCH_BLOCKED` | 422 | URL is unsupported or fails SSRF checks. |
 | `DEPENDENCY_UNAVAILABLE` | 503 | Kafka, Postgres, Redis, or Elasticsearch unavailable. |
 
-## V1 Copy Compatibility
+## Visible Copy Compatibility
 
-The frontend may map these codes to v1-visible copy. For example:
+The frontend may map these codes to stable visible copy. For example:
 
 - Login failures should still show `Invalid email or password. Please try again.`
 - Duplicate signup should still show `An account with this email already exists. Please try logging in instead.`

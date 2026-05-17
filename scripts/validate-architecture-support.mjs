@@ -172,7 +172,7 @@ function validateDocs() {
   for (const marker of [
     'future Raycast clients',
     'Hidden Collections And Marketplace Foundation',
-    'must not be linked from the v1 parity UI',
+    'must not be linked from the current bookmark workspace UI',
     'Listing versions store snapshots',
     'Raycast-Ready Tokens',
     'Plain API token values are shown only once'
@@ -249,7 +249,7 @@ async function validateNoWebMarketplaceRoutes() {
   ]) {
     try {
       await access(path.join(repoRoot, routePath));
-      fail(`Hidden marketplace/Raycast architecture route must not be exposed in copied v1 UI: ${routePath}`);
+      fail(`Hidden marketplace/Raycast architecture route must not be exposed in the bookmark workspace UI: ${routePath}`);
     } catch (error) {
       if (error?.code !== 'ENOENT') {
         throw error;

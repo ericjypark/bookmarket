@@ -35,7 +35,7 @@ Operational correctness:
 
 - A bookmark is a private saved URL owned by a user.
 - Metadata is separate from the bookmark row and fetched asynchronously.
-- A category is a v1 compatibility label owned by a user.
+- A category is an organization label owned by a user.
 - A public profile exposes a user's public sharing surface, not marketplace listings.
 - A collection is an ordered set of bookmarks.
 - A listing is a sellable projection of a collection.
