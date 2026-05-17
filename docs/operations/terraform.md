@@ -28,9 +28,9 @@ terraform plan \
   -var='api_host=api.bmkt.ericjypark.com' \
   -var='web_tls_secret_name=bookmarket-web-tls' \
   -var='api_tls_secret_name=bookmarket-api-tls' \
-  -var='web_image=ghcr.io/eric-jy-park/bookmarket-v2-web:<tag>' \
-  -var='api_image=ghcr.io/eric-jy-park/bookmarket-v2-api:<tag>' \
-  -var='metadata_worker_image=ghcr.io/eric-jy-park/bookmarket-v2-metadata-worker:<tag>'
+  -var='web_image=ghcr.io/ericjypark/bookmarket-v2-web:<tag>' \
+  -var='api_image=ghcr.io/ericjypark/bookmarket-v2-api:<tag>' \
+  -var='metadata_worker_image=ghcr.io/ericjypark/bookmarket-v2-metadata-worker:<tag>'
 ```
 
 When a Pi release is already running local image tags instead of GHCR tags, set `BOOKMARKET_WEB_IMAGE`, `BOOKMARKET_API_IMAGE`, and `BOOKMARKET_METADATA_WORKER_IMAGE` to the current deployed image tags before running `pnpm release:readiness:local`, `pnpm smoke:production`, or `pnpm smoke:production:release`. `pnpm release:handoff` prints the live k3s deployment images. Those current deployed image tags keep Terraform from comparing the intended release deployment against the default `latest` tags.

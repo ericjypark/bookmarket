@@ -37,19 +37,19 @@ variable "api_tls_secret_name" {
 variable "web_image" {
   type        = string
   description = "GHCR-ready ARM64 web image."
-  default     = "ghcr.io/eric-jy-park/bookmarket-v2-web:latest"
+  default     = "ghcr.io/ericjypark/bookmarket-v2-web:latest"
 }
 
 variable "api_image" {
   type        = string
   description = "GHCR-ready ARM64 API image."
-  default     = "ghcr.io/eric-jy-park/bookmarket-v2-api:latest"
+  default     = "ghcr.io/ericjypark/bookmarket-v2-api:latest"
 }
 
 variable "metadata_worker_image" {
   type        = string
   description = "GHCR-ready ARM64 metadata worker image."
-  default     = "ghcr.io/eric-jy-park/bookmarket-v2-metadata-worker:latest"
+  default     = "ghcr.io/ericjypark/bookmarket-v2-metadata-worker:latest"
 }
 
 variable "app_secret_name" {

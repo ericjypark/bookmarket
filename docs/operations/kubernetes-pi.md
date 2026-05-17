@@ -48,9 +48,9 @@ Secret values should be created outside Terraform so they do not enter Terraform
 
 Images are expected to be GHCR-ready `linux/arm64` images:
 
-- `ghcr.io/eric-jy-park/bookmarket-v2-web:<tag>`
-- `ghcr.io/eric-jy-park/bookmarket-v2-api:<tag>`
-- `ghcr.io/eric-jy-park/bookmarket-v2-metadata-worker:<tag>`
+- `ghcr.io/ericjypark/bookmarket-v2-web:<tag>`
+- `ghcr.io/ericjypark/bookmarket-v2-api:<tag>`
+- `ghcr.io/ericjypark/bookmarket-v2-metadata-worker:<tag>`
 
 The deployment flow should build and push ARM64 images before running `terraform plan`.
 For the web image, pass `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `NEXT_PUBLIC_GITHUB_CLIENT_ID`, and `NEXT_PUBLIC_GITHUB_REDIRECT_URI` as Docker build args so the copied v1 OAuth client code is compiled with production public IDs.

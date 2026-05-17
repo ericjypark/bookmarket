@@ -402,7 +402,7 @@ Bookmarket v2 must be a complete rewrite of v1 with:
   - `terraform -chdir=infra/terraform/pi validate`: passed.
   - `terraform -chdir=infra/terraform/pi plan -input=false -lock=false -no-color`: passed with `18 to add, 0 to change, 0 to destroy`.
 - Image workflow guard:
-  - Added `scripts/validate-image-workflow.mjs` and `pnpm images:verify` to fail if the GHCR image workflow, Dockerfiles, local build scripts, or Terraform defaults stop agreeing on the three `linux/arm64` service images, or if the web image stops receiving the public OAuth build args needed by the copied v1 OAuth flow.
+  - Added `scripts/validate-image-workflow.mjs` and `pnpm images:verify` to fail if the GHCR image workflow, Pi deploy workflow rollout images, Dockerfiles, local build scripts, or Terraform defaults stop agreeing on the three `linux/arm64` service images, or if the web image stops receiving the public OAuth build args needed by the copied v1 OAuth flow.
   - CI now runs `node --check scripts/validate-image-workflow.mjs` and `pnpm images:verify`.
   - CI runs explicit static/build/test/dry-run release gates and `pnpm release:readiness:verify`; the full duplicated `pnpm release:readiness:local` remains a local release-operator gate because GitHub-hosted runners do not reliably start the Elasticsearch Compose service.
   - `node --check scripts/validate-image-workflow.mjs`: passed.

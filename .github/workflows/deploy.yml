@@ -19,13 +19,13 @@ jobs:
       matrix:
         include:
           - service: web
-            image: ghcr.io/eric-jy-park/bookmarket-v2-web
+            image: ghcr.io/ericjypark/bookmarket-v2-web
             dockerfile: apps/web/Dockerfile
           - service: api
-            image: ghcr.io/eric-jy-park/bookmarket-v2-api
+            image: ghcr.io/ericjypark/bookmarket-v2-api
             dockerfile: services/api/Dockerfile
           - service: metadata-worker
-            image: ghcr.io/eric-jy-park/bookmarket-v2-metadata-worker
+            image: ghcr.io/ericjypark/bookmarket-v2-metadata-worker
             dockerfile: services/metadata-worker/Dockerfile
 
     steps:
@@ -104,11 +104,11 @@ jobs:
               -p '{"imagePullSecrets":[{"name":"ghcr-pull"}]}'
 
             $KUBECTL -n bookmarket set image deployment/web \
-              web="ghcr.io/eric-jy-park/bookmarket-v2-web:${GHCR_TAG}"
+              web="ghcr.io/ericjypark/bookmarket-v2-web:${GHCR_TAG}"
             $KUBECTL -n bookmarket set image deployment/api \
-              api="ghcr.io/eric-jy-park/bookmarket-v2-api:${GHCR_TAG}"
+              api="ghcr.io/ericjypark/bookmarket-v2-api:${GHCR_TAG}"
             $KUBECTL -n bookmarket set image deployment/metadata-worker \
-              metadata-worker="ghcr.io/eric-jy-park/bookmarket-v2-metadata-worker:${GHCR_TAG}"
+              metadata-worker="ghcr.io/ericjypark/bookmarket-v2-metadata-worker:${GHCR_TAG}"
 
             $KUBECTL -n bookmarket rollout status deployment/web --timeout=5m
             $KUBECTL -n bookmarket rollout status deployment/api --timeout=5m

@@ -31,7 +31,7 @@ const envFileCandidates = [
 ].map(resolveMaybeRelative);
 const githubRepos = splitList(
   process.env.BOOKMARKET_OAUTH_EVIDENCE_GITHUB_REPOS
-    ?? 'eric-jy-park/bookmarket'
+    ?? 'ericjypark/bookmarket'
 );
 const artifactRoots = splitList(
   process.env.BOOKMARKET_OAUTH_EVIDENCE_ARTIFACT_ROOTS

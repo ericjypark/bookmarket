@@ -63,7 +63,7 @@ Landing route:
 - Header is fixed at the top with backdrop blur.
 - Hero copy is centered and animated with Framer Motion.
 - Slot status drives `Join Now`, `Sign In`, or `Slots Full` labels.
-- `Github` opens `https://github.com/eric-jy-park/bookmarket`.
+- `Github` opens `https://github.com/ericjypark/bookmarket`.
 
 Home route:
 

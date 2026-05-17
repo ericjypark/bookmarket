@@ -21,13 +21,13 @@ jobs:
       matrix:
         include:
           - service: web
-            image: ghcr.io/eric-jy-park/bookmarket-v2-web
+            image: ghcr.io/ericjypark/bookmarket-v2-web
             dockerfile: apps/web/Dockerfile
           - service: api
-            image: ghcr.io/eric-jy-park/bookmarket-v2-api
+            image: ghcr.io/ericjypark/bookmarket-v2-api
             dockerfile: services/api/Dockerfile
           - service: metadata-worker
-            image: ghcr.io/eric-jy-park/bookmarket-v2-metadata-worker
+            image: ghcr.io/ericjypark/bookmarket-v2-metadata-worker
             dockerfile: services/metadata-worker/Dockerfile
 
     steps:
