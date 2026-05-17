@@ -40,7 +40,8 @@ function main() {
   const terraformVariables = read('infra/terraform/pi/variables.tf');
 
   assertPattern(imageWorkflow, /packages:\s+write/, 'Image workflow must have packages: write permission for GHCR publishing.');
-  assertPattern(imageWorkflow, /docker\/setup-qemu-action@v3/, 'Image workflow must set up QEMU for ARM64 builds.');
+  assertPattern(imageWorkflow, /runs-on:\s+ubuntu-24\.04-arm/, 'Image workflow must use the native arm64 GitHub-hosted runner.');
+  assertForbidden(imageWorkflow, /docker\/setup-qemu-action@v3/, 'Image workflow should not use QEMU emulation for ARM64 builds.');
   assertPattern(imageWorkflow, /docker\/setup-buildx-action@v3/, 'Image workflow must set up Docker Buildx.');
   assertPattern(imageWorkflow, /docker\/login-action@v3[\s\S]*registry:\s+ghcr\.io/, 'Image workflow must log in to GHCR.');
   assertPattern(imageWorkflow, /platforms:\s+linux\/arm64/, 'Image workflow must build linux/arm64 images.');
@@ -48,6 +49,8 @@ function main() {
 
   assertPattern(deployWorkflow, /packages:\s+write/, 'Deploy workflow build job must have packages: write permission for GHCR publishing.');
   assertPattern(deployWorkflow, /packages:\s+read/, 'Deploy workflow deploy job must have packages: read permission for GHCR pull secret setup.');
+  assertPattern(deployWorkflow, /runs-on:\s+ubuntu-24\.04-arm/, 'Deploy workflow build job must use the native arm64 GitHub-hosted runner.');
+  assertForbidden(deployWorkflow, /docker\/setup-qemu-action@v3/, 'Deploy workflow should not use QEMU emulation for ARM64 builds.');
   assertPattern(deployWorkflow, /tailscale\/github-action@v2/, 'Deploy workflow must connect to Tailscale before SSH.');
   assertPattern(deployWorkflow, /appleboy\/ssh-action@v1\.0\.3/, 'Deploy workflow must roll out on the Raspberry Pi over SSH.');
 
@@ -101,6 +104,12 @@ function assertExists(relativePath, message) {
 
 function assertPattern(source, pattern, message) {
   if (!pattern.test(source)) {
+    fail(message);
+  }
+}
+
+function assertForbidden(source, pattern, message) {
+  if (pattern.test(source)) {
     fail(message);
   }
 }
