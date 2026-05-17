@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'node:fs';
+import { X509Certificate } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import process from 'node:process';
 import { productionKubeContextBlocker } from './lib/production-context.mjs';
@@ -16,6 +17,9 @@ const secretName = process.env.BOOKMARKET_APP_SECRET_NAME ?? 'bookmarket-app-sec
 const webTlsSecretName = process.env.BOOKMARKET_WEB_TLS_SECRET_NAME ?? 'bookmarket-web-tls';
 const apiTlsSecretName = process.env.BOOKMARKET_API_TLS_SECRET_NAME ?? 'bookmarket-api-tls';
 const expectedContext = (process.env.BOOKMARKET_PROD_KUBE_CONTEXT ?? '').trim();
+const webUrl = trimTrailingSlash(process.env.BOOKMARKET_WEB_URL ?? 'https://bmkt.ericjypark.com');
+const apiUrl = trimTrailingSlash(process.env.BOOKMARKET_API_URL ?? 'https://api.bmkt.ericjypark.com');
+const publicProfileTlsProbeUsername = process.env.BOOKMARKET_PUBLIC_PROFILE_USERNAME ?? 'profile-smoke';
 const requiredSecretKeys = ['database-user', 'database-password', 'jwt-secret'];
 const requiredTlsSecretKeys = ['tls.crt', 'tls.key'];
 const optionalSecretKeys = [
@@ -40,6 +44,9 @@ function main() {
 
   section('Bookmarket production context preflight');
   info(`Namespace: ${namespace}`);
+  info(`Web URL: ${webUrl}`);
+  info(`API URL: ${apiUrl}`);
+  info(`Public profile TLS probe host: ${publicProfileSubdomainUrl(publicProfileTlsProbeUsername)}`);
   info(`App secret: ${secretName}`);
   info(`Web TLS secret: ${webTlsSecretName}`);
   info(`API TLS secret: ${apiTlsSecretName}`);
@@ -96,6 +103,7 @@ function main() {
     capture: true
   });
   assertTlsSecretKeys(webTlsSecretName, webTlsSecretJson);
+  assertTlsSecretCertificateHosts(webTlsSecretName, webTlsSecretJson, webTlsExpectedHosts());
   const apiTlsSecretJson = run('Read API TLS secret metadata', 'kubectl', [
     '-n',
     namespace,
@@ -108,6 +116,7 @@ function main() {
     capture: true
   });
   assertTlsSecretKeys(apiTlsSecretName, apiTlsSecretJson);
+  assertTlsSecretCertificateHosts(apiTlsSecretName, apiTlsSecretJson, [hostnameFromUrl(apiUrl)]);
 
   info('Production context preflight passed.');
   info(`Use this exact context export for the release shell: export BOOKMARKET_PROD_KUBE_CONTEXT='${currentContext}'`);
@@ -132,6 +141,8 @@ function printDryRunPlan() {
     'Run read-only kubectl cluster-info, kubectl get nodes -o wide, namespace, and app-secret metadata checks.',
     'Verify required app-secret keys exist by name without printing secret values.',
     'Verify web and API TLS secrets exist with tls.crt and tls.key keys without printing secret values.',
+    'Verify web TLS certificate SANs cover the primary host and a wildcard public-profile subdomain.',
+    'Verify API TLS certificate SANs cover the API host.',
     'Print the exact BOOKMARKET_PROD_KUBE_CONTEXT export line after success.'
   ]);
 }
@@ -174,6 +185,58 @@ function assertTlsSecretKeys(tlsSecretName, secretJson) {
   }
 
   info(`${tlsSecretName} TLS keys present: ${requiredTlsSecretKeys.join(', ')}`);
+}
+
+function assertTlsSecretCertificateHosts(tlsSecretName, secretJson, expectedHosts) {
+  let secret;
+  try {
+    secret = JSON.parse(secretJson);
+  } catch (error) {
+    fail(`Unable to parse ${tlsSecretName} JSON: ${error.message}`);
+  }
+
+  const encodedCertificate = secret.data?.['tls.crt'];
+  if (!encodedCertificate) {
+    fail(`${tlsSecretName} is missing tls.crt`);
+  }
+
+  let certificate;
+  try {
+    certificate = new X509Certificate(Buffer.from(encodedCertificate, 'base64').toString('utf8'));
+  } catch (error) {
+    fail(`${tlsSecretName} tls.crt is not a parseable X.509 certificate: ${error.message}`);
+  }
+
+  const dnsNames = certificateDnsNames(certificate);
+  for (const host of expectedHosts.filter(Boolean)) {
+    if (!certificateCoversHost(host, dnsNames)) {
+      fail(`${tlsSecretName} certificate does not cover ${host}. SANs: ${dnsNames.join(', ') || 'none'}`);
+    }
+  }
+
+  info(`${tlsSecretName} certificate covers: ${expectedHosts.filter(Boolean).join(', ')}`);
+}
+
+function certificateDnsNames(certificate) {
+  return (certificate.subjectAltName ?? '')
+    .split(/,\s*/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.startsWith('DNS:'))
+    .map((entry) => entry.slice('DNS:'.length).toLowerCase());
+}
+
+function certificateCoversHost(host, dnsNames) {
+  const normalizedHost = host.toLowerCase();
+  return dnsNames.some((name) => {
+    if (name === normalizedHost) {
+      return true;
+    }
+    if (!name.startsWith('*.')) {
+      return false;
+    }
+    const suffix = name.slice(1);
+    return normalizedHost.endsWith(suffix) && normalizedHost.slice(0, -suffix.length).includes('.') === false;
+  });
 }
 
 function readKubeContextFileIssues() {
@@ -226,6 +289,32 @@ function readKubeContextFileIssues() {
 
 function isMissingConfiguredFile(filePath) {
   return typeof filePath === 'string' && filePath.length > 0 && !fs.existsSync(filePath);
+}
+
+function trimTrailingSlash(value) {
+  return value.replace(/\/+$/, '');
+}
+
+function hostnameFromUrl(value) {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return '';
+  }
+}
+
+function webTlsExpectedHosts() {
+  const webHost = hostnameFromUrl(webUrl);
+  return [webHost, `${publicProfileTlsProbeUsername}.${webHost}`];
+}
+
+function publicProfileSubdomainUrl(username) {
+  try {
+    const parsed = new URL(webUrl);
+    return `${parsed.protocol}//${username}.${parsed.host}`;
+  } catch {
+    return '';
+  }
 }
 
 function run(label, command, commandArgs, options = {}) {

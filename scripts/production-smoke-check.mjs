@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { X509Certificate } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import process from 'node:process';
@@ -18,6 +19,7 @@ const expectedContext = process.env.BOOKMARKET_PROD_KUBE_CONTEXT;
 const webUrl = trimTrailingSlash(process.env.BOOKMARKET_WEB_URL ?? 'https://bmkt.ericjypark.com');
 const apiUrl = trimTrailingSlash(process.env.BOOKMARKET_API_URL ?? 'https://api.bmkt.ericjypark.com');
 const publicProfileUsername = process.env.BOOKMARKET_PUBLIC_PROFILE_USERNAME;
+const publicProfileTlsProbeUsername = process.env.BOOKMARKET_PUBLIC_PROFILE_USERNAME ?? 'profile-smoke';
 
 const requiredSecretKeys = ['database-user', 'database-password', 'jwt-secret'];
 const requiredTlsSecretKeys = ['tls.crt', 'tls.key'];
@@ -46,6 +48,7 @@ function main() {
   info(`Namespace: ${namespace}`);
   info(`Web URL: ${webUrl}`);
   info(`API URL: ${apiUrl}`);
+  info(`Public profile TLS probe host: ${publicProfileSubdomainUrl(publicProfileTlsProbeUsername)}`);
   info(`Web TLS secret: ${webTlsSecretName}`);
   info(`API TLS secret: ${apiTlsSecretName}`);
 
@@ -91,6 +94,7 @@ function main() {
   ], { capture: true });
   if (!dryRun) {
     assertTlsSecretKeys(webTlsSecretName, webTlsSecretJson);
+    assertTlsSecretCertificateHosts(webTlsSecretName, webTlsSecretJson, webTlsExpectedHosts());
   }
   const apiTlsSecretJson = run('Read API TLS secret metadata', 'kubectl', [
     '-n',
@@ -103,6 +107,7 @@ function main() {
   ], { capture: true });
   if (!dryRun) {
     assertTlsSecretKeys(apiTlsSecretName, apiTlsSecretJson);
+    assertTlsSecretCertificateHosts(apiTlsSecretName, apiTlsSecretJson, [hostnameFromUrl(apiUrl)]);
   }
 
   run('List pods', 'kubectl', ['-n', namespace, 'get', 'pods', '-o', 'wide']);
@@ -134,9 +139,15 @@ function main() {
   run('API readiness', 'curl', ['-fsS', `${apiUrl}/actuator/health/readiness`]);
 
   if (publicProfileUsername) {
-    run('Public profile HTTP check', 'curl', ['-fsS', `${webUrl}/s/${publicProfileUsername}`]);
+    run('Public profile path HTTP check', 'curl', ['-fsS', `${webUrl}/s/${publicProfileUsername}`]);
+    run('Public profile subdomain HTTP check', 'curl', [
+      '-fsS',
+      publicProfileSubdomainUrl(publicProfileUsername)
+    ]);
   } else {
-    info('Skipping public profile HTTP check; set BOOKMARKET_PUBLIC_PROFILE_USERNAME to enable it.');
+    info(
+      'Skipping public profile HTTP checks; set BOOKMARKET_PUBLIC_PROFILE_USERNAME to check both /s/<username> and the wildcard subdomain.'
+    );
   }
 
   run('Postgres readiness in cluster', 'kubectl', [
@@ -293,6 +304,54 @@ function assertTlsSecretKeys(tlsSecretName, secretJson) {
   info(`TLS secret ${tlsSecretName} required keys present: ${requiredTlsSecretKeys.join(', ')}`);
 }
 
+function assertTlsSecretCertificateHosts(tlsSecretName, secretJson, expectedHosts) {
+  const secret = JSON.parse(secretJson);
+  const encodedCertificate = secret.data?.['tls.crt'];
+  if (!encodedCertificate) {
+    fail(`Secret ${tlsSecretName} is missing tls.crt.`);
+  }
+
+  let certificate;
+  try {
+    certificate = new X509Certificate(Buffer.from(encodedCertificate, 'base64').toString('utf8'));
+  } catch (error) {
+    fail(`Secret ${tlsSecretName} tls.crt is not a parseable X.509 certificate: ${error.message}`);
+  }
+
+  const dnsNames = certificateDnsNames(certificate);
+  for (const host of expectedHosts.filter(Boolean)) {
+    if (!certificateCoversHost(host, dnsNames)) {
+      fail(
+        `Secret ${tlsSecretName} certificate does not cover ${host}. SANs: ${dnsNames.join(', ') || 'none'}`
+      );
+    }
+  }
+
+  info(`TLS secret ${tlsSecretName} certificate covers: ${expectedHosts.filter(Boolean).join(', ')}`);
+}
+
+function certificateDnsNames(certificate) {
+  return (certificate.subjectAltName ?? '')
+    .split(/,\s*/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.startsWith('DNS:'))
+    .map((entry) => entry.slice('DNS:'.length).toLowerCase());
+}
+
+function certificateCoversHost(host, dnsNames) {
+  const normalizedHost = host.toLowerCase();
+  return dnsNames.some((name) => {
+    if (name === normalizedHost) {
+      return true;
+    }
+    if (!name.startsWith('*.')) {
+      return false;
+    }
+    const suffix = name.slice(1);
+    return normalizedHost.endsWith(suffix) && normalizedHost.slice(0, -suffix.length).includes('.') === false;
+  });
+}
+
 function runSearchRebuildSmoke(secret) {
   if (dryRun) {
     info(
@@ -403,6 +462,20 @@ function resolveRepoPath(value) {
 function hostnameFromUrl(value) {
   try {
     return new URL(value).hostname;
+  } catch {
+    return '';
+  }
+}
+
+function webTlsExpectedHosts() {
+  const webHost = hostnameFromUrl(webUrl);
+  return [webHost, `${publicProfileTlsProbeUsername}.${webHost}`];
+}
+
+function publicProfileSubdomainUrl(username) {
+  try {
+    const parsed = new URL(webUrl);
+    return `${parsed.protocol}//${username}.${parsed.host}`;
   } catch {
     return '';
   }

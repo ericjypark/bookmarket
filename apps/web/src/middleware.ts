@@ -8,6 +8,7 @@ import {
   getRefreshTokenCookieOptions,
   REFRESH_TOKEN_COOKIE_NAME,
 } from '~/app/_common/utils/auth-cookies';
+import { RESERVED_PUBLIC_PROFILE_USERNAMES, publicAppHost } from '~/app/_common/utils/public-url';
 import { authRelatedRoutes, unauthenticatedRoutes } from '~/path';
 
 const apiBaseUrl = () =>
@@ -18,6 +19,28 @@ const apiBaseUrl = () =>
 
 const matchesRoute = (pathname: string, route: string) =>
   route === '/' ? pathname === '/' : pathname === route || pathname.startsWith(`${route}/`);
+
+const hostnameFromHost = (host: string | null): string | null => {
+  if (!host) return null;
+
+  try {
+    return new URL(`http://${host}`).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+};
+
+const subdomainFromHost = (requestHost: string | null, appHost: string): string | null => {
+  const requestHostname = hostnameFromHost(requestHost);
+  const appHostname = hostnameFromHost(appHost);
+  if (!requestHostname || !appHostname) return null;
+  if (!requestHostname.endsWith(`.${appHostname}`)) return null;
+
+  const candidate = requestHostname.slice(0, -(appHostname.length + 1));
+  if (!candidate || candidate.includes('.')) return null;
+  if (RESERVED_PUBLIC_PROFILE_USERNAMES.has(candidate)) return null;
+  return candidate;
+};
 
 const cookieHeaderWithTokens = (cookieHeader: string | null, tokens: TokenResponse) => {
   const cookies = new Map<string, string>();
@@ -119,7 +142,7 @@ const refreshSession = async (request: NextRequest): Promise<TokenResponse | nul
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host');
-  const mainDomain = process.env.NEXT_PUBLIC_DOMAIN;
+  const mainDomain = publicAppHost();
   const pathname = request.nextUrl.pathname;
 
   // Log for debugging in production
@@ -136,18 +159,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (
-    host &&
-    mainDomain &&
-    host.includes('.') &&
-    host.endsWith(mainDomain) &&
-    !host.startsWith('www.') &&
-    !host.startsWith('api.') &&
-    !host.startsWith('bmkt.') &&
-    !host.startsWith('ericpark.')
-  ) {
-    // Logic for handling subdomains
-    const subdomain = host.split('.')[0];
+  const subdomain = subdomainFromHost(host, mainDomain);
+  if (subdomain) {
     console.log(`Detected subdomain: ${subdomain}`);
 
     const protocol = request.nextUrl.protocol;

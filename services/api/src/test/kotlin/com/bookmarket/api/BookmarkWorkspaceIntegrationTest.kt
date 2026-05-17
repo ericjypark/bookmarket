@@ -495,6 +495,21 @@ class BookmarkWorkspaceIntegrationTest {
             jsonPath("$.isAvailable") { value(true) }
         }
 
+        mockMvc.get("/api/v1/users/check-username?username=Upper") {
+            bearer(profileOnlyToken)
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.error.code") { value("VALIDATION_FAILED") }
+            jsonPath("$.error.details.fields.username") { value("Username must contain only lowercase characters") }
+        }
+
+        mockMvc.get("/api/v1/users/check-username?username=www") {
+            bearer(profileOnlyToken)
+        }.andExpect {
+            status { isForbidden() }
+            jsonPath("$.error.code") { value("USERNAME_NOT_ALLOWED") }
+        }
+
         mockMvc.patch("/api/v1/users/me") {
             bearer(profileOnlyToken)
             contentType = MediaType.APPLICATION_JSON

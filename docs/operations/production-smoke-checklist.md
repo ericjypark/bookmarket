@@ -23,6 +23,8 @@ export BOOKMARKET_WEB_URL=https://bmkt.ericjypark.com
 export BOOKMARKET_API_URL=https://api.bmkt.ericjypark.com
 export BOOKMARKET_WEB_TLS_SECRET_NAME=bookmarket-web-tls
 export BOOKMARKET_API_TLS_SECRET_NAME=bookmarket-api-tls
+# Optional, enables public profile HTTP checks for both /s/<username> and <username>.bmkt.ericjypark.com.
+export BOOKMARKET_PUBLIC_PROFILE_USERNAME=bokdol
 ```
 
 Set image overrides when Terraform should compare against specific deployed
@@ -46,6 +48,9 @@ The preflight verifies:
 - Common local contexts are refused.
 - Namespace, nodes, and app secret metadata are readable.
 - TLS secrets include `tls.crt` and `tls.key`.
+- The web TLS certificate covers both `bmkt.ericjypark.com` and a wildcard
+  public-profile hostname like `bokdol.bmkt.ericjypark.com`.
+- The API TLS certificate covers `api.bmkt.ericjypark.com`.
 - Secret values are not printed.
 
 ## Backup
@@ -82,7 +87,9 @@ It checks:
 - Web/API/metadata worker rollouts.
 - Kafka topic initialization.
 - Public web health, API health, and API readiness.
-- Optional public profile HTTP response when `BOOKMARKET_PUBLIC_PROFILE_USERNAME`
+- Web/API TLS certificate SANs from the selected Kubernetes secrets.
+- Optional public profile HTTP responses for both `/s/<username>` and
+  `<username>.bmkt.ericjypark.com` when `BOOKMARKET_PUBLIC_PROFILE_USERNAME`
   is set.
 - In-cluster Postgres, Redis, Kafka, and Elasticsearch health.
 - Optional search rebuild when `search-rebuild-token` exists.

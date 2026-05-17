@@ -4,8 +4,11 @@ import { GeistSans } from 'geist/font/sans';
 import { type Metadata } from 'next';
 import Script from 'next/script';
 import { GlobalProvider } from '../_common/providers/global-provider';
+import { publicAppOrigin } from '../_common/utils/public-url';
 import { Toaster } from '../_core/components/toaster';
 import { cn } from '../_core/utils/cn';
+
+const appOrigin = publicAppOrigin();
 
 export const metadata: Metadata = {
   title: {
@@ -34,7 +37,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://bmkt.tech',
+    url: appOrigin,
     title: 'BookMarket',
     description: `(Don't) Manage your bookmarks (with Chrome)`,
     siteName: 'BookMarket',

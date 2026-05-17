@@ -16,6 +16,13 @@ import { Label } from '~/app/_core/components/label';
 import { trackProfileEvent } from '../utils/analytics';
 import { checkUsernameAvailable } from '../actions/user.action';
 import { useBodyScrollLock } from '../hooks/use-body-scroll-lock';
+import {
+  PUBLIC_PROFILE_USERNAME_MAX_LENGTH,
+  PUBLIC_PROFILE_USERNAME_PATTERN,
+  RESERVED_PUBLIC_PROFILE_USERNAMES,
+  publicAppHost,
+  publicAppProtocol,
+} from '../utils/public-url';
 import { UserProfile } from './user-profile';
 
 export default function UserSettingsDialog({
@@ -29,15 +36,37 @@ export default function UserSettingsDialog({
   const router = useRouter();
   const formRef = React.useRef<HTMLFormElement>(null);
   const [user, setUser] = React.useState(() => initialUser);
+  const publicProfileHost = publicAppHost();
+  const publicProfileProtocol = publicAppProtocol();
+  const usernameValue = user.username ?? '';
+  const initialUsernameValue = initialUser.username ?? '';
+  const hasEditedUsername = usernameValue !== initialUsernameValue;
+  const usernameValidationError = React.useMemo(() => {
+    if (!usernameValue) return 'Subdomain is required';
+    if (!PUBLIC_PROFILE_USERNAME_PATTERN.test(usernameValue)) {
+      return 'Subdomain must contain only lowercase letters';
+    }
+    if (usernameValue.length > PUBLIC_PROFILE_USERNAME_MAX_LENGTH) {
+      return `Subdomain must be ${PUBLIC_PROFILE_USERNAME_MAX_LENGTH} characters or fewer`;
+    }
+    if (RESERVED_PUBLIC_PROFILE_USERNAMES.has(usernameValue.toLowerCase())) {
+      return 'This subdomain is reserved';
+    }
+    return null;
+  }, [usernameValue]);
 
   React.useEffect(() => {
     trackProfileEvent.editStart();
   }, []);
 
-  const { data: usernameCheck, isLoading: isUsernameChecking } = useQuery({
-    queryFn: () => checkUsernameAvailable(user.username!),
-    queryKey: ['username', user.username],
-    enabled: !!user.username && user.username !== initialUser.username,
+  const {
+    data: usernameCheck,
+    isError: isUsernameCheckError,
+    isLoading: isUsernameChecking,
+  } = useQuery({
+    queryFn: () => checkUsernameAvailable(usernameValue),
+    queryKey: ['username', usernameValue],
+    enabled: hasEditedUsername && !usernameValidationError,
   });
 
   // Track username availability check results
@@ -92,12 +121,14 @@ export default function UserSettingsDialog({
   }, []);
 
   const subdomainStatus = React.useMemo(() => {
+    if (hasEditedUsername && usernameValidationError) return 'invalid';
     if (isUsernameChecking) return 'loading';
-    if (user.username === initialUser.username) return 'idle';
+    if (isUsernameCheckError) return 'unavailable';
+    if (!hasEditedUsername) return 'idle';
 
     if (usernameCheck?.isAvailable) return 'available';
     return 'taken';
-  }, [initialUser.username, isUsernameChecking, user.username, usernameCheck?.isAvailable]);
+  }, [hasEditedUsername, isUsernameCheckError, isUsernameChecking, usernameCheck?.isAvailable, usernameValidationError]);
 
   const subdomainStatusIcon = React.useMemo(() => {
     switch (subdomainStatus) {
@@ -107,6 +138,9 @@ export default function UserSettingsDialog({
         return <XIcon className='text-red-300' />;
       case 'loading':
         return <Loader2Icon className='animate-spin text-gray-300' />;
+      case 'invalid':
+      case 'unavailable':
+        return <XIcon className='text-red-300' />;
       case 'idle':
       default:
         return null;
@@ -114,8 +148,8 @@ export default function UserSettingsDialog({
   }, [subdomainStatus]);
 
   const isProfileSaveable = React.useMemo(() => {
-    if (subdomainStatus === 'loading' || subdomainStatus === 'taken') return false;
-    if (user.username?.length === 0) return false;
+    if (subdomainStatus === 'loading' || subdomainStatus === 'taken' || subdomainStatus === 'unavailable') return false;
+    if (usernameValidationError) return false;
     if (
       user.firstName === initialUser.firstName &&
       user.lastName === initialUser.lastName &&
@@ -129,7 +163,7 @@ export default function UserSettingsDialog({
     subdomainStatus,
     user.firstName,
     user.lastName,
-    user.username?.length,
+    usernameValidationError,
   ]);
 
   return (
@@ -179,26 +213,40 @@ export default function UserSettingsDialog({
             </div>
             <div className='*:not-first:mt-2 space-y-2'>
               <Label htmlFor={`username`}>Personal Subdomain</Label>
-              <div className='shadow-xs relative flex rounded-md'>
-                <span className='inline-flex items-center rounded-s-md border border-input bg-background px-3 text-sm text-muted-foreground'>
-                  https://
+              <div className='shadow-xs relative flex min-w-0 rounded-md'>
+                <span className='inline-flex shrink-0 items-center rounded-s-md border border-input bg-background px-3 text-sm text-muted-foreground'>
+                  {publicProfileProtocol}://
                 </span>
-                <Input
-                  placeholder='google'
-                  name='username'
-                  type='text'
-                  value={user.username}
-                  onChange={handleInputChange}
-                  className='mr-px rounded-none border-x-0'
-                />
-                <div className='absolute right-[100px] top-1/2 -translate-y-1/2'>{subdomainStatusIcon}</div>
-                <span className='inline-flex items-center rounded-e-md border border-input bg-background px-3 text-sm text-muted-foreground'>
-                  .bmkt.tech
+                <div className='relative min-w-0 flex-1'>
+                  <Input
+                    placeholder='google'
+                    name='username'
+                    type='text'
+                    value={user.username}
+                    onChange={handleInputChange}
+                    className='h-full rounded-none border-x-0 pr-9'
+                  />
+                  {subdomainStatusIcon && (
+                    <div className='pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center [&_svg]:size-4'>
+                      {subdomainStatusIcon}
+                    </div>
+                  )}
+                </div>
+                <span className='inline-flex min-w-0 max-w-[58%] items-center rounded-e-md border border-input bg-background px-3 text-sm text-muted-foreground'>
+                  <span className='block truncate' title={`.${publicProfileHost}`}>
+                    .{publicProfileHost}
+                  </span>
                 </span>
               </div>
               {state.error.username && <p className='mt-1 text-sm text-red-500'>{state.error.username}</p>}
-              {usernameCheck?.isAvailable === false && (
+              {!state.error.username && hasEditedUsername && usernameValidationError && (
+                <p className='mt-1 text-sm text-red-500'>{usernameValidationError}</p>
+              )}
+              {!state.error.username && !usernameValidationError && usernameCheck?.isAvailable === false && (
                 <p className='mt-1 text-sm text-red-500'>Username already taken</p>
+              )}
+              {!state.error.username && !usernameValidationError && isUsernameCheckError && (
+                <p className='mt-1 text-sm text-red-500'>Could not check this subdomain</p>
               )}
             </div>
             {/* @FIXME: Uncomment when public/private planning and implementation is done */}

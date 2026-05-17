@@ -22,6 +22,8 @@ class UsersController(
     private val userRepository: UserRepository,
     private val publicProfileCache: PublicProfileCache
 ) {
+    private val usernamePattern = Regex("^[a-z]+$")
+    private val usernameMaxLength = 12
     private val reservedUsernames = setOf("www", "api", "s")
 
     @GetMapping("/me")
@@ -56,9 +58,25 @@ class UsersController(
         @RequestParam username: String
     ): UsernameAvailabilityDto {
         val currentUser = authService.currentUserOrApiToken(request, setOf(ApiTokenService.ScopeProfileRead))
+        ensureUsernameValid(username)
         ensureUsernameAllowed(username)
         return UsernameAvailabilityDto(
             isAvailable = userRepository.isUsernameAvailableForUser(UUID.fromString(currentUser.id), username)
+        )
+    }
+
+    private fun ensureUsernameValid(username: String) {
+        val message = when {
+            !usernamePattern.matches(username) -> "Username must contain only lowercase characters"
+            username.length > usernameMaxLength -> "Username cannot exceed $usernameMaxLength characters"
+            else -> null
+        } ?: return
+
+        throw ApiException(
+            HttpStatus.BAD_REQUEST,
+            "VALIDATION_FAILED",
+            "Validation failed",
+            mapOf("fields" to mapOf("username" to message))
         )
     }
 

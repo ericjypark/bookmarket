@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 
 const defaultWebUrl = 'https://bmkt.ericjypark.com';
 const defaultApiUrl = 'https://api.bmkt.ericjypark.com';
+const defaultPublicProfileSubdomain = 'profile-smoke';
 
 const endpointSpecs = [
   { label: 'BOOKMARKET_WEB_URL /login', base: 'web', path: '/login', required: false },
@@ -21,9 +22,11 @@ export function publicEndpointDiagnostics(env = process.env) {
 
 export function publicEndpointCertificateDiagnostics(env = process.env) {
   const origins = publicEndpointOrigins(env);
+  const publicProfileOrigin = publicProfileSubdomainOrigin(origins.web, env);
 
   return [
     certificateDiagnostic('BOOKMARKET_WEB_URL TLS certificate', origins.web),
+    certificateDiagnostic('Public profile wildcard TLS certificate', publicProfileOrigin),
     certificateDiagnostic('BOOKMARKET_API_URL TLS certificate', origins.api)
   ];
 }
@@ -53,6 +56,24 @@ function publicEndpointOrigins(env) {
     web: normaliseOrigin(env.BOOKMARKET_WEB_URL ?? defaultWebUrl),
     api: normaliseOrigin(env.BOOKMARKET_API_URL ?? defaultApiUrl)
   };
+}
+
+function publicProfileSubdomainOrigin(webOrigin, env) {
+  const configuredUrl = normaliseOrigin(env.BOOKMARKET_PUBLIC_PROFILE_URL ?? '');
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  try {
+    const parsed = new URL(webOrigin);
+    const subdomain = (env.BOOKMARKET_PUBLIC_PROFILE_USERNAME ?? defaultPublicProfileSubdomain).trim();
+    if (!subdomain) {
+      return '';
+    }
+    return `${parsed.protocol}//${subdomain}.${parsed.host}`;
+  } catch {
+    return '';
+  }
 }
 
 function normaliseOrigin(rawUrl) {
