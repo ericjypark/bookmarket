@@ -79,7 +79,6 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
-          script_stop: true
           command_timeout: 15m
           envs: GHCR_TOKEN,GHCR_USER,GHCR_TAG,METADATA_WORKER_HOST_RESOLVE_OVERRIDES
           script: |

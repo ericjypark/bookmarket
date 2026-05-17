@@ -60,6 +60,7 @@ function main() {
   assertPattern(deployWorkflow, /docker\/build-push-action@v7/, 'Deploy workflow must build and push with the Node 24 action.');
   assertPattern(deployWorkflow, /tailscale\/github-action@v4/, 'Deploy workflow must connect to Tailscale before SSH with the Node 24 action.');
   assertPattern(deployWorkflow, /appleboy\/ssh-action@v1\.2\.5/, 'Deploy workflow must roll out on the Raspberry Pi over SSH.');
+  assertForbidden(deployWorkflow, /script_stop:/, 'Deploy workflow must not pass removed ssh-action inputs.');
 
   for (const service of services) {
     assertPattern(imageWorkflow, new RegExp(`service:\\s+${escapeRegex(service.name)}\\b`), `Image workflow is missing service matrix entry: ${service.name}`);
