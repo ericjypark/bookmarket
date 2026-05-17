@@ -42,8 +42,11 @@ function main() {
   assertPattern(imageWorkflow, /packages:\s+write/, 'Image workflow must have packages: write permission for GHCR publishing.');
   assertPattern(imageWorkflow, /runs-on:\s+ubuntu-24\.04-arm/, 'Image workflow must use the native arm64 GitHub-hosted runner.');
   assertForbidden(imageWorkflow, /docker\/setup-qemu-action@v3/, 'Image workflow should not use QEMU emulation for ARM64 builds.');
-  assertPattern(imageWorkflow, /docker\/setup-buildx-action@v3/, 'Image workflow must set up Docker Buildx.');
-  assertPattern(imageWorkflow, /docker\/login-action@v3[\s\S]*registry:\s+ghcr\.io/, 'Image workflow must log in to GHCR.');
+  assertPattern(imageWorkflow, /actions\/checkout@v6/, 'Image workflow must use the Node 24 checkout action.');
+  assertPattern(imageWorkflow, /docker\/setup-buildx-action@v4/, 'Image workflow must set up Docker Buildx with the Node 24 action.');
+  assertPattern(imageWorkflow, /docker\/login-action@v4[\s\S]*registry:\s+ghcr\.io/, 'Image workflow must log in to GHCR with the Node 24 action.');
+  assertPattern(imageWorkflow, /docker\/metadata-action@v6/, 'Image workflow must generate Docker metadata with the Node 24 action.');
+  assertPattern(imageWorkflow, /docker\/build-push-action@v7/, 'Image workflow must build and push with the Node 24 action.');
   assertPattern(imageWorkflow, /platforms:\s+linux\/arm64/, 'Image workflow must build linux/arm64 images.');
   assertPattern(imageWorkflow, /push:\s+true/, 'Image workflow must push images.');
 
@@ -51,8 +54,12 @@ function main() {
   assertPattern(deployWorkflow, /packages:\s+read/, 'Deploy workflow deploy job must have packages: read permission for GHCR pull secret setup.');
   assertPattern(deployWorkflow, /runs-on:\s+ubuntu-24\.04-arm/, 'Deploy workflow build job must use the native arm64 GitHub-hosted runner.');
   assertForbidden(deployWorkflow, /docker\/setup-qemu-action@v3/, 'Deploy workflow should not use QEMU emulation for ARM64 builds.');
-  assertPattern(deployWorkflow, /tailscale\/github-action@v2/, 'Deploy workflow must connect to Tailscale before SSH.');
-  assertPattern(deployWorkflow, /appleboy\/ssh-action@v1\.0\.3/, 'Deploy workflow must roll out on the Raspberry Pi over SSH.');
+  assertPattern(deployWorkflow, /actions\/checkout@v6/, 'Deploy workflow must use the Node 24 checkout action.');
+  assertPattern(deployWorkflow, /docker\/setup-buildx-action@v4/, 'Deploy workflow must set up Docker Buildx with the Node 24 action.');
+  assertPattern(deployWorkflow, /docker\/login-action@v4[\s\S]*registry:\s+ghcr\.io/, 'Deploy workflow must log in to GHCR with the Node 24 action.');
+  assertPattern(deployWorkflow, /docker\/build-push-action@v7/, 'Deploy workflow must build and push with the Node 24 action.');
+  assertPattern(deployWorkflow, /tailscale\/github-action@v4/, 'Deploy workflow must connect to Tailscale before SSH with the Node 24 action.');
+  assertPattern(deployWorkflow, /appleboy\/ssh-action@v1\.2\.5/, 'Deploy workflow must roll out on the Raspberry Pi over SSH.');
 
   for (const service of services) {
     assertPattern(imageWorkflow, new RegExp(`service:\\s+${escapeRegex(service.name)}\\b`), `Image workflow is missing service matrix entry: ${service.name}`);
