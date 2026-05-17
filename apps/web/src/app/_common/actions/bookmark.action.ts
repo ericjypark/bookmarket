@@ -39,11 +39,8 @@ export const createBookmark = async ({
   const response: Bookmark = await http
     .post('bookmarks', {
       json: {
-        title,
-        description,
-        faviconUrl,
         url,
-        category,
+        categoryName: category,
       },
       headers: {
         Cookie: await getAuthCookie(),
@@ -77,7 +74,7 @@ export const updateBookmark = async ({
           description,
           faviconUrl,
           url,
-          category,
+          categoryName: category,
         },
         headers: {
           Cookie: await getAuthCookie(),
@@ -113,8 +110,15 @@ export const deleteBookmark = async ({ id }: { id: string }) => {
 };
 
 export const refetchBookmark = async ({ id }: { id: string }) => {
+  await http
+    .post(`bookmarks/${id}/metadata-refetch`, {
+      headers: {
+        Cookie: await getAuthCookie(),
+      },
+    });
+
   const response: Bookmark = await http
-    .post(`bookmarks/${id}/refetch`, {
+    .get(`bookmarks/${id}`, {
       headers: {
         Cookie: await getAuthCookie(),
       },

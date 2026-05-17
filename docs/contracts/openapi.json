@@ -1,0 +1,2709 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Bookmarket API",
+    "version": "0.1.0",
+    "description": "Stable DTO contract for Bookmarket v2 web, future Raycast, and future marketplace clients."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "cookieAuth": []
+    }
+  ],
+  "paths": {
+    "/auth/signup": {
+      "post": {
+        "operationId": "signup",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TokenPair"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "login",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TokenPair"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/auth/oauth/state": {
+      "post": {
+        "operationId": "createOAuthState",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthStateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One-time OAuth state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthStateDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/auth/oauth/google": {
+      "post": {
+        "operationId": "googleOAuth",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/OAuthLogin"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TokenPair"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/auth/oauth/github": {
+      "post": {
+        "operationId": "githubOAuth",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/OAuthLogin"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TokenPair"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "refreshToken",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/TokenPair"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "204": {
+            "description": "Logged out"
+          }
+        }
+      }
+    },
+    "/signup-slots": {
+      "get": {
+        "operationId": "getSignupSlots",
+        "tags": [
+          "Auth"
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Signup slot state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupSlotsDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "operationId": "getMe",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/UserProfile"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "profile:read"
+        ]
+      },
+      "patch": {
+        "operationId": "updateMe",
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/UserProfile"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/users/check-username": {
+      "get": {
+        "operationId": "checkUsername",
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Username availability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsernameAvailabilityDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "profile:read"
+        ]
+      }
+    },
+    "/public-profiles/{username}": {
+      "get": {
+        "operationId": "getPublicProfile",
+        "tags": [
+          "PublicProfiles"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UsernamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/bookmarks": {
+      "get": {
+        "operationId": "listBookmarks",
+        "tags": [
+          "Bookmarks"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CategoryQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookmarkList"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:read"
+        ]
+      },
+      "post": {
+        "operationId": "createBookmark",
+        "tags": [
+          "Bookmarks"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookmarkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Bookmark"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:write"
+        ]
+      }
+    },
+    "/bookmarks/{bookmarkId}": {
+      "get": {
+        "operationId": "getBookmark",
+        "tags": [
+          "Bookmarks"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookmarkIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Bookmark"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:read"
+        ]
+      },
+      "patch": {
+        "operationId": "updateBookmark",
+        "tags": [
+          "Bookmarks"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookmarkIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookmarkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Bookmark"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:write"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteBookmark",
+        "tags": [
+          "Bookmarks"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookmarkIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Bookmark deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:write"
+        ]
+      }
+    },
+    "/bookmarks/{bookmarkId}/category": {
+      "patch": {
+        "operationId": "updateBookmarkCategory",
+        "tags": [
+          "Bookmarks"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookmarkIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookmarkCategoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Bookmark"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:write"
+        ]
+      }
+    },
+    "/bookmarks/{bookmarkId}/metadata-refetch": {
+      "post": {
+        "operationId": "requestBookmarkMetadataRefetch",
+        "tags": [
+          "Bookmarks"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookmarkIdPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Metadata job queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataJobStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:write"
+        ]
+      }
+    },
+    "/bookmarks/{bookmarkId}/metadata-status": {
+      "get": {
+        "operationId": "getBookmarkMetadataStatus",
+        "tags": [
+          "Bookmarks"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookmarkIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current metadata job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataJobStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:read"
+        ]
+      }
+    },
+    "/public-profiles/{username}/bookmarks": {
+      "get": {
+        "operationId": "listPublicBookmarks",
+        "tags": [
+          "PublicProfiles"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UsernamePath"
+          },
+          {
+            "$ref": "#/components/parameters/CategoryQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookmarkList"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "operationId": "listCategories",
+        "tags": [
+          "Categories"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CategoryList"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:read"
+        ]
+      },
+      "post": {
+        "operationId": "createCategory",
+        "tags": [
+          "Categories"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryMutationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Category"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:write"
+        ]
+      }
+    },
+    "/categories/{categoryId}": {
+      "patch": {
+        "operationId": "updateCategory",
+        "tags": [
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CategoryIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryMutationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Category"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:write"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteCategory",
+        "tags": [
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CategoryIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Category deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "x-required-scopes": [
+          "bookmarks:write"
+        ]
+      }
+    },
+    "/public-profiles/{username}/categories": {
+      "get": {
+        "operationId": "listPublicCategories",
+        "tags": [
+          "PublicProfiles"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UsernamePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CategoryList"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/search/bookmarks": {
+      "get": {
+        "operationId": "searchBookmarks",
+        "tags": [
+          "Search"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "apiTokenAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/BookmarkList"
+          }
+        }
+      }
+    },
+    "/ops/search/bookmarks/rebuild": {
+      "post": {
+        "operationId": "rebuildBookmarkSearchIndex",
+        "tags": [
+          "Operations",
+          "Search"
+        ],
+        "security": [
+          {
+            "opsTokenAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/SearchRebuild"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api-tokens": {
+      "get": {
+        "operationId": "listApiTokens",
+        "tags": [
+          "ApiTokens"
+        ],
+        "responses": {
+          "200": {
+            "description": "API token metadata list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiTokenDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createApiToken",
+        "tags": [
+          "ApiTokens"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApiTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "API token created; plain token is shown once",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateApiTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api-tokens/{apiTokenId}": {
+      "delete": {
+        "operationId": "deleteApiToken",
+        "tags": [
+          "ApiTokens"
+        ],
+        "parameters": [
+          {
+            "name": "apiTokenId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "API token revoked"
+          }
+        }
+      }
+    },
+    "/collections": {
+      "get": {
+        "operationId": "listCollections",
+        "tags": [
+          "Collections"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CollectionList"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCollection",
+        "tags": [
+          "Collections"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Collection"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/collections/{collectionId}": {
+      "get": {
+        "operationId": "getCollection",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CollectionIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Collection"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateCollection",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CollectionIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCollectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Collection"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteCollection",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CollectionIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Collection deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/public-collections/{collectionId}": {
+      "get": {
+        "operationId": "getPublicCollection",
+        "tags": [
+          "Collections"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CollectionIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Collection"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": []
+      }
+    },
+    "/marketplace/listings": {
+      "get": {
+        "operationId": "listPublishedListings",
+        "tags": [
+          "Marketplace"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ListingList"
+          }
+        },
+        "security": []
+      },
+      "post": {
+        "operationId": "createListingDraft",
+        "tags": [
+          "Marketplace"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateListingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Listing"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/marketplace/listings/{listingId}/publish": {
+      "post": {
+        "operationId": "publishListing",
+        "tags": [
+          "Marketplace"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ListingIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ListingVersion"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/marketplace/listings/{slugOrId}": {
+      "get": {
+        "operationId": "getPublishedListing",
+        "tags": [
+          "Marketplace"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SlugOrIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Listing"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": []
+      }
+    },
+    "/marketplace/listings/{slugOrId}/latest-version": {
+      "get": {
+        "operationId": "getPublishedListingLatestVersion",
+        "tags": [
+          "Marketplace"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SlugOrIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/ListingVersion"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": []
+      }
+    },
+    "/marketplace/listings/{listingId}/purchases": {
+      "post": {
+        "operationId": "purchaseFreeListing",
+        "tags": [
+          "Marketplace"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ListingIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/Purchase"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "402": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/purchases": {
+      "get": {
+        "operationId": "listPurchases",
+        "tags": [
+          "Marketplace"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/PurchaseList"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/access-grants": {
+      "get": {
+        "operationId": "listAccessGrants",
+        "tags": [
+          "Marketplace"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/AccessGrantList"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "access_token"
+      },
+      "apiTokenAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "opsTokenAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Bookmarket-Ops-Token"
+      }
+    },
+    "parameters": {
+      "BookmarkIdPath": {
+        "name": "bookmarkId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "CategoryIdPath": {
+        "name": "categoryId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "UsernamePath": {
+        "name": "username",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 32
+        }
+      },
+      "CategoryQuery": {
+        "name": "category",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 200
+        }
+      },
+      "CollectionIdPath": {
+        "name": "collectionId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "ListingIdPath": {
+        "name": "listingId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "SlugOrIdPath": {
+        "name": "slugOrId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "requestBodies": {
+      "OAuthLogin": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OAuthLoginRequest"
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "TokenPair": {
+        "description": "Access and refresh tokens",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TokenPairDto"
+            }
+          }
+        }
+      },
+      "UserProfile": {
+        "description": "User profile",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UserProfileDto"
+            }
+          }
+        }
+      },
+      "Bookmark": {
+        "description": "Bookmark",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BookmarkDto"
+            }
+          }
+        }
+      },
+      "BookmarkList": {
+        "description": "Bookmark list",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/BookmarkDto"
+              }
+            }
+          }
+        }
+      },
+      "Category": {
+        "description": "Category",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CategoryDto"
+            }
+          }
+        }
+      },
+      "CategoryList": {
+        "description": "Category list",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CategoryDto"
+              }
+            }
+          }
+        }
+      },
+      "SearchRebuild": {
+        "description": "Bookmark search index rebuild result",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchRebuildResult"
+            }
+          }
+        }
+      },
+      "Error": {
+        "description": "Error response",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "Collection": {
+        "description": "Collection",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/CollectionDto"
+            }
+          }
+        }
+      },
+      "CollectionList": {
+        "description": "Collections",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CollectionDto"
+              }
+            }
+          }
+        }
+      },
+      "Listing": {
+        "description": "Listing",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ListingDto"
+            }
+          }
+        }
+      },
+      "ListingList": {
+        "description": "Published listings",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ListingDto"
+              }
+            }
+          }
+        }
+      },
+      "ListingVersion": {
+        "description": "Listing version",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ListingVersionDto"
+            }
+          }
+        }
+      },
+      "Purchase": {
+        "description": "Purchase",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PurchaseDto"
+            }
+          }
+        }
+      },
+      "PurchaseList": {
+        "description": "Purchases",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PurchaseDto"
+              }
+            }
+          }
+        }
+      },
+      "AccessGrantList": {
+        "description": "Access grants",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AccessGrantDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "EmailPasswordRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          }
+        }
+      },
+      "OAuthStateRequest": {
+        "type": "object",
+        "required": [
+          "provider"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "google",
+              "github"
+            ]
+          },
+          "pkceVerifier": {
+            "type": "string"
+          }
+        }
+      },
+      "OAuthStateDto": {
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string"
+          }
+        }
+      },
+      "OAuthLoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "redirectUri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "credential": {
+            "type": "string"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "code",
+              "redirectUri"
+            ]
+          },
+          {
+            "required": [
+              "credential"
+            ]
+          },
+          {
+            "required": [
+              "accessToken"
+            ]
+          }
+        ]
+      },
+      "TokenPairDto": {
+        "type": "object",
+        "required": [
+          "accessToken",
+          "refreshToken"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          }
+        }
+      },
+      "SignupSlotsDto": {
+        "type": "object",
+        "required": [
+          "remaining",
+          "total",
+          "canSignUp"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "remaining": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "const": 100
+          },
+          "canSignUp": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UserProfileDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "username",
+          "firstName",
+          "lastName",
+          "pictureUrl",
+          "isPublic"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pictureUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "isPublic": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateUserProfileRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "isPublic": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UsernameAvailabilityDto": {
+        "type": "object",
+        "required": [
+          "isAvailable"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "isAvailable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PublicProfileDto": {
+        "type": "object",
+        "required": [
+          "username",
+          "displayName",
+          "isPublic"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isPublic": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CategorySummaryDto": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CategoryDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookmarkDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "title",
+          "description",
+          "faviconUrl",
+          "metadataStatus",
+          "createdAt",
+          "updatedAt",
+          "category"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "faviconUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "metadataStatus": {
+            "$ref": "#/components/schemas/MetadataStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "category": {
+            "$ref": "#/components/schemas/CategorySummaryDto"
+          }
+        }
+      },
+      "MetadataStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "READY",
+          "FAILED"
+        ]
+      },
+      "CreateBookmarkRequest": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateBookmarkRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "categoryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateBookmarkCategoryRequest": {
+        "type": "object",
+        "required": [
+          "categoryId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "categoryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "MetadataJobStatusDto": {
+        "type": "object",
+        "required": [
+          "bookmarkId",
+          "status",
+          "metadataVersion"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "bookmarkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MetadataStatus"
+          },
+          "metadataVersion": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "SearchRebuildResult": {
+        "type": "object",
+        "required": [
+          "indexed"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "indexed": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "CategoryMutationRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
+      },
+      "ApiTokenDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "tokenPrefix",
+          "scopes",
+          "createdAt",
+          "lastUsedAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tokenPrefix": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateApiTokenRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "scopes"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateApiTokenResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "tokenMetadata"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "tokenMetadata": {
+            "$ref": "#/components/schemas/ApiTokenDto"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "requestId"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "requestId": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      "CollectionVisibility": {
+        "type": "string",
+        "enum": [
+          "PRIVATE",
+          "PUBLIC",
+          "UNLISTED"
+        ]
+      },
+      "ListingStatus": {
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "PUBLISHED",
+          "ARCHIVED"
+        ]
+      },
+      "PurchaseStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "PAID",
+          "REFUNDED",
+          "CANCELED"
+        ]
+      },
+      "AccessGrantSource": {
+        "type": "string",
+        "enum": [
+          "PURCHASE",
+          "ADMIN",
+          "CREATOR_PREVIEW"
+        ]
+      },
+      "CollectionItemDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "position",
+          "note",
+          "bookmark"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bookmark": {
+            "$ref": "#/components/schemas/BookmarkDto"
+          }
+        }
+      },
+      "CollectionDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "visibility",
+          "items",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/CollectionVisibility"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionItemDto"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CollectionItemInput": {
+        "type": "object",
+        "required": [
+          "bookmarkId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "bookmarkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateCollectionRequest": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/CollectionVisibility",
+            "default": "PRIVATE"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionItemInput"
+            }
+          }
+        }
+      },
+      "UpdateCollectionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/CollectionVisibility"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CollectionItemInput"
+            }
+          }
+        }
+      },
+      "ListingDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "sellerUserId",
+          "collectionId",
+          "status",
+          "slug",
+          "title",
+          "description",
+          "priceCents",
+          "currency",
+          "latestVersion",
+          "publishedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sellerUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "collectionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListingStatus"
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "latestVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ListingVersionDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "listingId",
+          "version",
+          "collectionId",
+          "snapshot",
+          "priceCents",
+          "currency",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "collectionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "snapshot": {
+            "type": "object"
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateListingRequest": {
+        "type": "object",
+        "required": [
+          "collectionId",
+          "title"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "collectionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "USD"
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PurchaseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "buyerUserId",
+          "listingId",
+          "listingVersionId",
+          "status",
+          "amountCents",
+          "currency",
+          "purchasedAt",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "buyerUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listingVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PurchaseStatus"
+          },
+          "amountCents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "purchasedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AccessGrantDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "userId",
+          "listingVersionId",
+          "purchaseId",
+          "source",
+          "expiresAt",
+          "revokedAt",
+          "createdAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listingVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purchaseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "source": {
+            "$ref": "#/components/schemas/AccessGrantSource"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

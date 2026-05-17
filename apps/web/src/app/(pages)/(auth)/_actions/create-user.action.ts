@@ -12,7 +12,7 @@ export const createUser = async (state: { error: string; field: string } | null,
 
   try {
     const response: TokenResponse = await http
-      .post(`authentication/signup`, {
+      .post(`auth/signup`, {
         json: { email, password },
       })
       .json();

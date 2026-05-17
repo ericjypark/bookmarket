@@ -6,8 +6,7 @@ import { getAuthCookie } from '~/app/_common/utils/get-auth-cookie';
 
 export async function fixBrokenFavicon({ id }: Pick<Bookmark, 'id'>) {
   try {
-    // Use the new enhancement endpoint for better metadata
-    await http.post(`bookmarks/${id}/enhance`, {
+    await http.post(`bookmarks/${id}/metadata-refetch`, {
       headers: {
         Cookie: await getAuthCookie(),
       },

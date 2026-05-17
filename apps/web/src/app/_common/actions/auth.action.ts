@@ -19,7 +19,7 @@ export const refreshNewAccessToken = async () => {
     }
 
     const tokens: TokenResponse = await http
-      .post('authentication/refresh-token', {
+      .post('auth/refresh', {
         json: {
           refreshToken,
         },
@@ -111,6 +111,19 @@ export const isAuthenticated = async () => {
 export const signOut = async () => {
   try {
     const cookieStore = await cookies();
+    const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE_NAME)?.value;
+
+    if (refreshToken) {
+      await http
+        .post('auth/logout', {
+          json: {
+            refreshToken,
+          },
+        })
+        .catch(error => {
+          Sentry.captureException(error);
+        });
+    }
 
     cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME);
     cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME);

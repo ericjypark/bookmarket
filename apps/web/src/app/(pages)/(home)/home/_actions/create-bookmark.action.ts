@@ -1,5 +1,3 @@
-import { type UrlMetadata } from '~/app/_common/interfaces/metadata.interface';
-import { getMetadata } from './get-metadata.action';
 import { createBookmark } from '~/app/_common/actions/bookmark.action';
 import * as Sentry from '@sentry/nextjs';
 
@@ -33,12 +31,9 @@ export const createBookmarkAction = async (
     return { error: 'Invalid URL', success: previousState.success };
   }
 
-  const data: UrlMetadata = await getMetadata(fullUrl);
-
   try {
     await createBookmark({
-      title: data.title,
-      description: data.description,
+      title: fullUrl,
       url: fullUrl,
       category: category,
     });
