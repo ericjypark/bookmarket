@@ -12,6 +12,7 @@ import {
   createBookmark,
   displayTitle,
   listCategories,
+  upsertCachedBookmark,
   userFacingError,
 } from "./api/client";
 
@@ -73,6 +74,7 @@ export default function AddBookmarkCommand() {
         url: normalizedUrl,
         categoryName: values.categoryName?.trim() || undefined,
       });
+      upsertCachedBookmark(bookmark);
 
       await showToast({
         style: Toast.Style.Success,

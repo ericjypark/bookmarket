@@ -11,9 +11,12 @@ import {
   Bookmark,
   displayHost,
   displayTitle,
+  filterCachedBookmarks,
   listBookmarks,
+  readCachedBookmarkList,
   searchBookmarks,
   userFacingError,
+  writeCachedBookmarkList,
 } from "./api/client";
 
 const searchDebounceMs = 250;
@@ -28,6 +31,14 @@ export default function SearchBookmarksCommand() {
 
   useEffect(() => {
     const abortController = new AbortController();
+    const cachedBookmarks = readCachedBookmarkList();
+
+    if (cachedBookmarks) {
+      setBookmarks(
+        query ? filterCachedBookmarks(cachedBookmarks, query) : cachedBookmarks,
+      );
+    }
+
     const loadBookmarks = () => {
       setIsLoading(true);
       setError(null);
@@ -37,7 +48,10 @@ export default function SearchBookmarksCommand() {
         : listBookmarks(abortController.signal);
 
       request
-        .then(setBookmarks)
+        .then((nextBookmarks) => {
+          setBookmarks(nextBookmarks);
+          if (!query) writeCachedBookmarkList(nextBookmarks);
+        })
         .catch((nextError: unknown) => {
           if (!abortController.signal.aborted) setError(nextError);
         })

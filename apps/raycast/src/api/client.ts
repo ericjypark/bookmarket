@@ -1,5 +1,5 @@
-import { getPreferenceValues } from "@raycast/api";
-import { randomUUID } from "node:crypto";
+import { Cache, getPreferenceValues } from "@raycast/api";
+import { createHash, randomUUID } from "node:crypto";
 
 type Preferences = {
   apiBaseUrl: string;
@@ -52,6 +52,7 @@ type RequestOptions = RequestInit & {
 };
 
 const apiVersionSuffix = "/api/v1";
+const bookmarkListCache = new Cache({ namespace: "bookmarks" });
 
 const preferences = () => getPreferenceValues<Preferences>();
 
@@ -80,6 +81,15 @@ const apiToken = () => {
     );
   }
   return token;
+};
+
+const bookmarkListCacheKey = () => {
+  const identity = `${apiRoot()}|${apiToken()}`;
+  const digest = createHash("sha256")
+    .update(identity)
+    .digest("hex")
+    .slice(0, 16);
+  return `bookmark-list:${digest}`;
 };
 
 const buildUrl = (
@@ -155,6 +165,79 @@ export const listBookmarks = async (signal?: AbortSignal) =>
   requestJson<Bookmark[]>("/bookmarks", {
     signal,
   });
+
+type BookmarkListCachePayload = {
+  bookmarks: Bookmark[];
+  cachedAt: string;
+};
+
+const parseCachedBookmarkList = (value: string): Bookmark[] | undefined => {
+  try {
+    const payload = JSON.parse(value) as Partial<BookmarkListCachePayload>;
+    return Array.isArray(payload.bookmarks) ? payload.bookmarks : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+export const readCachedBookmarkList = () => {
+  try {
+    const cacheKey = bookmarkListCacheKey();
+    const cachedValue = bookmarkListCache.get(cacheKey);
+    if (!cachedValue) return undefined;
+
+    const bookmarks = parseCachedBookmarkList(cachedValue);
+    if (!bookmarks) bookmarkListCache.remove(cacheKey);
+    return bookmarks;
+  } catch {
+    return undefined;
+  }
+};
+
+export const writeCachedBookmarkList = (bookmarks: Bookmark[]) => {
+  try {
+    bookmarkListCache.set(
+      bookmarkListCacheKey(),
+      JSON.stringify({
+        bookmarks,
+        cachedAt: new Date().toISOString(),
+      } satisfies BookmarkListCachePayload),
+    );
+  } catch {
+    // Cache writes are best effort; the network response is still authoritative.
+  }
+};
+
+export const upsertCachedBookmark = (bookmark: Bookmark) => {
+  const cachedBookmarks = readCachedBookmarkList();
+  if (!cachedBookmarks) return;
+
+  writeCachedBookmarkList([
+    bookmark,
+    ...cachedBookmarks.filter(
+      (cachedBookmark) => cachedBookmark.id !== bookmark.id,
+    ),
+  ]);
+};
+
+export const filterCachedBookmarks = (bookmarks: Bookmark[], query: string) => {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (!normalizedQuery) return bookmarks;
+
+  return bookmarks.filter((bookmark) => {
+    const fields = [
+      bookmark.title,
+      bookmark.url,
+      displayHost(bookmark.url),
+      bookmark.description,
+      bookmark.category?.name,
+    ];
+
+    return fields.some((field) =>
+      field?.toLowerCase().includes(normalizedQuery),
+    );
+  });
+};
 
 export const listCategories = async (signal?: AbortSignal) =>
   requestJson<Category[]>("/categories", {
