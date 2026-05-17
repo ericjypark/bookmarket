@@ -52,6 +52,7 @@ class KafkaBookmarkEventPublisherIntegrationTest {
             description = "Kafka metadata",
             faviconUrl = "https://kafka.example/favicon.ico",
             metadataStatus = "PENDING",
+            metadataUpdatedAt = Instant.parse("2026-05-16T00:00:00Z"),
             createdAt = Instant.parse("2026-05-16T00:00:00Z"),
             updatedAt = Instant.parse("2026-05-16T00:00:00Z"),
             category = null

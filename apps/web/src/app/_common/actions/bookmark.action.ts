@@ -1,6 +1,6 @@
 'use server';
 
-import { type Bookmark } from '~/app/_common/interfaces/bookmark.interface';
+import { type Bookmark, type MetadataJobStatus } from '~/app/_common/interfaces/bookmark.interface';
 import { http } from '~/app/_common/utils/http';
 import { getAuthCookie } from '~/app/_common/utils/get-auth-cookie';
 import { isAuthenticated } from '~/app/_common/actions/auth.action';
@@ -110,20 +110,13 @@ export const deleteBookmark = async ({ id }: { id: string }) => {
 };
 
 export const refetchBookmark = async ({ id }: { id: string }) => {
-  await http
+  const status: MetadataJobStatus = await http
     .post(`bookmarks/${id}/metadata-refetch`, {
-      headers: {
-        Cookie: await getAuthCookie(),
-      },
-    });
-
-  const response: Bookmark = await http
-    .get(`bookmarks/${id}`, {
       headers: {
         Cookie: await getAuthCookie(),
       },
     })
     .json();
 
-  return response;
+  return status;
 };

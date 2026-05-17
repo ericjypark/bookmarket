@@ -10,6 +10,7 @@ import { useBodyScrollLock } from '~/app/_common/hooks/use-body-scroll-lock';
 import { type Bookmark } from '~/app/_common/interfaces/bookmark.interface';
 import { useQuery } from '@tanstack/react-query';
 import { bookmarksQuery } from '~/app/_common/state/query/bookmark.query';
+import { isBookmarkMetadataActive } from '~/app/_common/utils/bookmark-metadata';
 
 export function BookmarkList({ bookmarks: initialBookmarks, isViewOnly }: { bookmarks: Bookmark[]; isViewOnly: boolean }) {
   const { activeBookmarkId } = useBookmarkStore();
@@ -17,11 +18,26 @@ export function BookmarkList({ bookmarks: initialBookmarks, isViewOnly }: { book
   const [category] = useQueryState('c', parseAsString);
 
   // Use React Query for real-time updates, fallback to initial bookmarks
-  const { data: bookmarks = initialBookmarks } = useQuery({
+  const { data: bookmarks = initialBookmarks, refetch } = useQuery({
     ...bookmarksQuery(),
     initialData: initialBookmarks,
     enabled: !isViewOnly, // Only fetch updates when not in view-only mode
   });
+
+  const hasPendingMetadata = React.useMemo(
+    () => bookmarks.some(isBookmarkMetadataActive),
+    [bookmarks],
+  );
+
+  React.useEffect(() => {
+    if (isViewOnly || !hasPendingMetadata) return;
+
+    const interval = window.setInterval(() => {
+      void refetch();
+    }, 2000);
+
+    return () => window.clearInterval(interval);
+  }, [hasPendingMetadata, isViewOnly, refetch]);
 
   const filteredBookmarks = React.useMemo(
     () =>

@@ -41,6 +41,7 @@ class ElasticsearchBookmarkSearchIndex(
                     "description" to mapOf("type" to "text", "fields" to mapOf("keyword" to mapOf("type" to "keyword"))),
                     "faviconUrl" to mapOf("type" to "keyword", "index" to false),
                     "metadataStatus" to mapOf("type" to "keyword"),
+                    "metadataUpdatedAt" to mapOf("type" to "date"),
                     "categoryId" to mapOf("type" to "keyword"),
                     "categoryName" to mapOf("type" to "keyword"),
                     "categoryCreatedAt" to mapOf("type" to "date"),
@@ -106,6 +107,7 @@ class ElasticsearchBookmarkSearchIndex(
             "description" to bookmark.description,
             "faviconUrl" to bookmark.faviconUrl,
             "metadataStatus" to bookmark.metadataStatus,
+            "metadataUpdatedAt" to bookmark.metadataUpdatedAt?.toString(),
             "categoryId" to bookmark.category?.id,
             "categoryName" to bookmark.category?.name,
             "categoryCreatedAt" to bookmark.category?.createdAt?.toString(),
@@ -154,6 +156,7 @@ class ElasticsearchBookmarkSearchIndex(
             description = path("description").textOrNull(),
             faviconUrl = path("faviconUrl").textOrNull(),
             metadataStatus = path("metadataStatus").asText("PENDING"),
+            metadataUpdatedAt = path("metadataUpdatedAt").instantOrNull(),
             createdAt = Instant.parse(path("createdAt").asText()),
             updatedAt = Instant.parse(path("updatedAt").asText()),
             category = path("categoryId").textOrNull()?.let { categoryId ->
@@ -171,6 +174,9 @@ class ElasticsearchBookmarkSearchIndex(
 
     private fun JsonNode.instantOrEpoch(): Instant =
         if (isNull || isMissingNode || asText().isBlank()) Instant.EPOCH else Instant.parse(asText())
+
+    private fun JsonNode.instantOrNull(): Instant? =
+        if (isNull || isMissingNode || asText().isBlank()) null else Instant.parse(asText())
 
     private fun escapeWildcard(value: String): String =
         value

@@ -5,10 +5,31 @@
  */
 export const getDomainSafely = (url: string): string => {
   try {
-    return new URL(url).hostname;
+    return new URL(url).hostname.replace(/^www\./, '');
   } catch {
     console.warn('Invalid URL provided for domain extraction:', url);
     return 'invalid-url';
+  }
+};
+
+export const getFallbackFaviconUrl = (url: string): string => {
+  const domain = getDomainSafely(url);
+  if (domain === 'invalid-url') return '';
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+};
+
+const bookmarkUrlRegex = /^(http[s]?:\/\/)?(www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,5}\.?/;
+
+export const normalizeBookmarkUrl = (url: string): string => {
+  const trimmedUrl = url.trim();
+  return trimmedUrl.startsWith('http') ? trimmedUrl : `https://${trimmedUrl}`;
+};
+
+export const isValidBookmarkUrl = (url: string): boolean => {
+  try {
+    return bookmarkUrlRegex.test(url);
+  } catch {
+    return false;
   }
 };
 

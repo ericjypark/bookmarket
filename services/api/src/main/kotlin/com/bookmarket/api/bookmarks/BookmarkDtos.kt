@@ -11,6 +11,7 @@ data class BookmarkDto(
     val description: String?,
     val faviconUrl: String?,
     val metadataStatus: String,
+    val metadataUpdatedAt: Instant?,
     val createdAt: Instant,
     val updatedAt: Instant,
     val category: CategoryDto?

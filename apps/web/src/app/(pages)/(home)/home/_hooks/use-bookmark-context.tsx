@@ -19,6 +19,7 @@ export const useBookmarkContext = ({ bookmark }: { bookmark: Bookmark }) => {
   const { setActiveBookmarkId, activeBookmarkId } = useBookmarkStore();
 
   const isCurrentBookmarkRefetching = refetchingBookmarkId === bookmark.id;
+  const isTransientBookmark = Boolean(bookmark.isOptimistic);
 
   const menuItems = React.useMemo(
     () => [
@@ -42,7 +43,7 @@ export const useBookmarkContext = ({ bookmark }: { bookmark: Bookmark }) => {
             setActiveBookmarkId(null);
           }
         },
-        disabled: false,
+        disabled: isTransientBookmark,
       },
       {
         icon: RefreshCwIcon,
@@ -51,7 +52,7 @@ export const useBookmarkContext = ({ bookmark }: { bookmark: Bookmark }) => {
           trackBookmarkEvent.refetch(bookmark.url);
           handleRefetch(bookmark.id);
         },
-        disabled: isCurrentBookmarkRefetching,
+        disabled: isCurrentBookmarkRefetching || isTransientBookmark,
       },
       {
         icon: TrashIcon,
@@ -60,7 +61,7 @@ export const useBookmarkContext = ({ bookmark }: { bookmark: Bookmark }) => {
           trackBookmarkEvent.delete(bookmark.url);
           void handleDelete(bookmark.id);
         },
-        disabled: false,
+        disabled: isTransientBookmark,
       },
     ],
     [
@@ -71,6 +72,7 @@ export const useBookmarkContext = ({ bookmark }: { bookmark: Bookmark }) => {
       handleDelete,
       handleRefetch,
       isCurrentBookmarkRefetching,
+      isTransientBookmark,
       setActiveBookmarkId,
     ],
   );

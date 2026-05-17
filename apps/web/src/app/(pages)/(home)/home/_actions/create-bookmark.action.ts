@@ -1,44 +1,39 @@
 import { createBookmark } from '~/app/_common/actions/bookmark.action';
 import * as Sentry from '@sentry/nextjs';
+import { type Bookmark } from '~/app/_common/interfaces/bookmark.interface';
+import { isValidBookmarkUrl, normalizeBookmarkUrl } from '~/app/_common/utils/url';
 
-const urlRegex = /^(http[s]?:\/\/)?(www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,5}\.?/;
-
-const validateUrl = (input: string) => {
-  try {
-    return urlRegex.test(input);
-  } catch {
-    return false;
-  }
-};
+export interface CreateBookmarkState {
+  error: string;
+  success: string;
+  bookmark?: Bookmark;
+}
 
 export const createBookmarkAction = async (
-  previousState: { error: string; success: string },
+  previousState: CreateBookmarkState,
   formData: FormData,
   category?: string,
-) => {
+): Promise<CreateBookmarkState> => {
   const url = formData.get('url') as string;
 
   if (!url) {
     return { error: 'URL is required', success: previousState.success };
   }
 
-  let fullUrl = url;
-  if (!fullUrl.startsWith('http')) {
-    fullUrl = `https://${fullUrl}`;
-  }
+  const fullUrl = normalizeBookmarkUrl(url);
 
-  if (!validateUrl(fullUrl)) {
+  if (!isValidBookmarkUrl(fullUrl)) {
     return { error: 'Invalid URL', success: previousState.success };
   }
 
   try {
-    await createBookmark({
+    const bookmark = await createBookmark({
       title: fullUrl,
       url: fullUrl,
       category: category,
     });
 
-    return { success: 'Bookmark created', error: '' };
+    return { success: 'Bookmark created', error: '', bookmark };
   } catch (error) {
     Sentry.captureException('Error creating bookmark:', {
       extra: {

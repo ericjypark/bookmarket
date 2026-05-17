@@ -1,4 +1,5 @@
 import { motion, useAnimation } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
@@ -6,7 +7,8 @@ import { Logo } from '~/app/_common/components/logo';
 import { type Bookmark } from '~/app/_common/interfaces/bookmark.interface';
 import { cn } from '~/app/_core/utils/cn';
 import { trackBookmarkEvent, trackSharingEvent } from '~/app/_common/utils/analytics';
-import { extractUsernameFromPath } from '~/app/_common/utils/url';
+import { isBookmarkMetadataActive } from '~/app/_common/utils/bookmark-metadata';
+import { extractUsernameFromPath, getDomainSafely, getFallbackFaviconUrl } from '~/app/_common/utils/url';
 import { useBookmarkContext } from '../_hooks/use-bookmark-context';
 import { BookmarkCardTitleInput } from './bookmark-card-title-input';
 import { BookmarkContextMenu, BookmarkContextMenuProvider, BookmarkContextMenuTrigger } from './bookmark-context-menu';
@@ -31,8 +33,9 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
     y: 0,
   });
 
-  // Get refetching state for this bookmark
   const { isCurrentBookmarkRefetching } = useBookmarkContext({ bookmark });
+  const isMetadataPending = isBookmarkMetadataActive(bookmark) || isCurrentBookmarkRefetching;
+  const hostname = getDomainSafely(bookmark.url);
 
   const handleCardClick = React.useCallback(() => {
     if (isActive || isBlurred) return;
@@ -113,27 +116,11 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
                 'flex w-full cursor-pointer items-center gap-3 rounded-md p-2 transition-all hover:bg-muted',
                 isActive && 'bg-muted',
                 isBlurred && 'pointer-events-none blur-sm',
-                !isViewOnly && isCurrentBookmarkRefetching && 'blur-sm',
               )}
               animate={animationControls}
               initial={{ scale: isActive ? 1.05 : 1 }}
             >
-              {bookmark.faviconUrl ? (
-                <Image
-                  src={bookmark.faviconUrl}
-                  alt={bookmark.title ?? ''}
-                  width={16}
-                  height={16}
-                  className='shrink-0 overflow-hidden'
-                  unoptimized={true}
-                  style={{
-                    maxWidth: '100%',
-                    height: 'auto',
-                  }}
-                />
-              ) : (
-                <Logo className='h-4 w-4 shrink-0' includeText={false} isLink={false} />
-              )}
+              <BookmarkFavicon bookmark={bookmark} />
               <div className='flex min-w-0 flex-1 flex-col'>
                 {isActive ? (
                   <BookmarkCardTitleInput bookmark={bookmark} />
@@ -141,9 +128,15 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
                   <p className='truncate text-sm font-medium'>{bookmark.title ?? ''}</p>
                 )}
                 <span className='truncate text-xs text-muted-foreground'>
-                  {new URL(bookmark.url).hostname.replace('www.', '')}
+                  {hostname}
                 </span>
               </div>
+              {!isViewOnly && isMetadataPending && (
+                <Loader2
+                  aria-label='Fetching metadata'
+                  className='h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground'
+                />
+              )}
               <span className='shrink-0 text-xs text-muted-foreground'>
                 {new Date(bookmark.createdAt).toLocaleDateString('en-US', {
                   month: 'short',
@@ -162,7 +155,6 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
         className={cn(
           'flex w-full cursor-pointer select-none items-center gap-3 rounded-md p-2 transition-all sm:hidden',
           isLongPressing && 'bg-muted',
-          !isViewOnly && isCurrentBookmarkRefetching && 'blur-sm',
         )}
         animate={animationControls}
         initial={{ scale: isActive ? 1.05 : 1 }}
@@ -172,22 +164,7 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
         onPointerLeave={endLongPress}
         onPointerCancel={endLongPress}
       >
-        {bookmark.faviconUrl ? (
-          <Image
-            src={bookmark.faviconUrl}
-            alt={bookmark.title ?? ''}
-            width={16}
-            height={16}
-            className='shrink-0 overflow-hidden'
-            unoptimized={true}
-            style={{
-              maxWidth: '100%',
-              height: 'auto',
-            }}
-          />
-        ) : (
-          <Logo className='h-4 w-4 shrink-0' includeText={false} isLink={false} />
-        )}
+        <BookmarkFavicon bookmark={bookmark} />
         <div className='flex min-w-0 flex-1 flex-col'>
           {isActive ? (
             <BookmarkCardTitleInput bookmark={bookmark} />
@@ -195,9 +172,12 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
             <p className='truncate text-sm font-medium'>{bookmark.title ?? ''}</p>
           )}
           <span className='truncate text-xs text-muted-foreground'>
-            {new URL(bookmark.url).hostname.replace('www.', '')}
+            {hostname}
           </span>
         </div>
+        {!isViewOnly && isMetadataPending && (
+          <Loader2 aria-label='Fetching metadata' className='h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground' />
+        )}
         <span className='shrink-0 text-xs text-muted-foreground'>
           {new Date(bookmark.createdAt).toLocaleDateString('en-US', {
             month: 'short',
@@ -224,6 +204,7 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
 
 const ViewOnlyBookmarkCard = React.memo(({ bookmark }: { bookmark: Bookmark }) => {
   const animationControls = useAnimation();
+  const hostname = getDomainSafely(bookmark.url);
   const handleSharedBookmarkClick = React.useCallback(() => {
     try {
       const username = extractUsernameFromPath(window.location.pathname);
@@ -244,27 +225,10 @@ const ViewOnlyBookmarkCard = React.memo(({ bookmark }: { bookmark: Bookmark }) =
       animate={animationControls}
       onClick={handleSharedBookmarkClick}
     >
-      {bookmark.faviconUrl ? (
-        <Image
-          src={bookmark.faviconUrl}
-          alt={bookmark.title ?? ''}
-          width={16}
-          height={16}
-          className='shrink-0 overflow-hidden'
-          unoptimized={true}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-          }}
-        />
-      ) : (
-        <Logo className='h-4 w-4 shrink-0' includeText={false} isLink={false} />
-      )}
+      <BookmarkFavicon bookmark={bookmark} />
       <div className='flex min-w-0 flex-1 flex-col'>
         <p className='truncate text-sm font-medium'>{bookmark.title ?? ''}</p>
-        <span className='truncate text-xs text-muted-foreground'>
-          {new URL(bookmark.url).hostname.replace('www.', '')}
-        </span>
+        <span className='truncate text-xs text-muted-foreground'>{hostname}</span>
       </div>
       <span className='shrink-0 text-xs text-muted-foreground'>
         {new Date(bookmark.createdAt).toLocaleDateString('en-US', {
@@ -277,3 +241,37 @@ const ViewOnlyBookmarkCard = React.memo(({ bookmark }: { bookmark: Bookmark }) =
 });
 
 ViewOnlyBookmarkCard.displayName = 'ViewOnlyBookmarkCard';
+
+const BookmarkFavicon = ({ bookmark }: { bookmark: Bookmark }) => {
+  const initialSrc = bookmark.faviconUrl || getFallbackFaviconUrl(bookmark.url);
+  const fallbackSrc = getFallbackFaviconUrl(bookmark.url);
+  const [src, setSrc] = React.useState(initialSrc);
+  const [hasFailed, setHasFailed] = React.useState(false);
+
+  React.useEffect(() => {
+    setSrc(initialSrc);
+    setHasFailed(false);
+  }, [initialSrc]);
+
+  if (!src || hasFailed) {
+    return <Logo className='h-4 w-4 shrink-0' includeText={false} isLink={false} />;
+  }
+
+  return (
+    <Image
+      src={src}
+      alt={bookmark.title ?? getDomainSafely(bookmark.url)}
+      width={16}
+      height={16}
+      className='h-4 w-4 shrink-0 object-contain'
+      unoptimized={true}
+      onError={() => {
+        if (src !== fallbackSrc && fallbackSrc) {
+          setSrc(fallbackSrc);
+          return;
+        }
+        setHasFailed(true);
+      }}
+    />
+  );
+};

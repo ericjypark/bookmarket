@@ -11,30 +11,34 @@ export const useBookmarkRefetch = () => {
   const refetchMutation = useMutation({
     mutationFn: refetchBookmark,
     onMutate: variables => {
-      // Set the refetching bookmark ID when mutation starts
+      const now = new Date();
       setRefetchingBookmarkId(variables.id);
-    },
-    onSuccess: (updatedBookmark: Bookmark, variables) => {
-      // Update the specific bookmark in the cache
       queryClient.setQueryData(['bookmarks'], (oldData: Bookmark[] | undefined) => {
         if (!oldData) return oldData;
-        return oldData.map(bookmark => (bookmark.id === updatedBookmark.id ? updatedBookmark : bookmark));
+        return oldData.map(bookmark =>
+          bookmark.id === variables.id ? { ...bookmark, metadataStatus: 'PENDING', metadataUpdatedAt: now } : bookmark,
+        );
+      });
+    },
+    onSuccess: (status, variables) => {
+      queryClient.setQueryData(['bookmarks'], (oldData: Bookmark[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.map(bookmark =>
+          bookmark.id === status.bookmarkId ? { ...bookmark, metadataStatus: status.metadataStatus } : bookmark,
+        );
       });
 
-      // Clear refetching state
       setRefetchingBookmarkId(null);
 
-      // Dismiss loading toast and show success
       toast.dismiss(`refetch-${variables.id}`);
-      toast.success('Bookmark metadata refreshed successfully');
+      toast.message('Refreshing metadata in the background');
+      void queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
     },
     onError: (error, variables) => {
       console.error('Failed to refetch bookmark:', error);
 
-      // Clear refetching state
       setRefetchingBookmarkId(null);
 
-      // Dismiss loading toast and show error
       toast.dismiss(`refetch-${variables.id}`);
       toast.error('Failed to refresh bookmark metadata');
     },

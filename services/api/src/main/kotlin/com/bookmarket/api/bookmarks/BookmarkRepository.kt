@@ -229,6 +229,7 @@ class BookmarkRepository(
             COALESCE(b.description_override, bm.description) AS description,
             bm.favicon_url,
             COALESCE(bm.status::text, 'PENDING') AS metadata_status,
+            bm.updated_at AS metadata_updated_at,
             b.created_at,
             b.updated_at,
             c.id AS category_id,
@@ -246,6 +247,7 @@ class BookmarkRepository(
                 description = rs.getString("description"),
                 faviconUrl = rs.getString("favicon_url"),
                 metadataStatus = rs.getString("metadata_status"),
+                metadataUpdatedAt = rs.getTimestamp("metadata_updated_at")?.toInstant(),
                 createdAt = rs.getTimestamp("created_at").toInstant(),
                 updatedAt = rs.getTimestamp("updated_at").toInstant(),
                 category = categoryId?.let {
