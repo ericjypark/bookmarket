@@ -11,6 +11,7 @@ import {
   Bookmark,
   displayHost,
   displayTitle,
+  listBookmarks,
   searchBookmarks,
   userFacingError,
 } from "./api/client";
@@ -26,19 +27,16 @@ export default function SearchBookmarksCommand() {
   const query = useMemo(() => searchText.trim(), [searchText]);
 
   useEffect(() => {
-    if (!query) {
-      setBookmarks([]);
-      setError(null);
-      setIsLoading(false);
-      return;
-    }
-
     const abortController = new AbortController();
-    const timeout = setTimeout(() => {
+    const loadBookmarks = () => {
       setIsLoading(true);
       setError(null);
 
-      searchBookmarks(query, abortController.signal)
+      const request = query
+        ? searchBookmarks(query, abortController.signal)
+        : listBookmarks(abortController.signal);
+
+      request
         .then(setBookmarks)
         .catch((nextError: unknown) => {
           if (!abortController.signal.aborted) setError(nextError);
@@ -46,10 +44,15 @@ export default function SearchBookmarksCommand() {
         .finally(() => {
           if (!abortController.signal.aborted) setIsLoading(false);
         });
-    }, searchDebounceMs);
+    };
+
+    const timeout = query
+      ? setTimeout(loadBookmarks, searchDebounceMs)
+      : undefined;
+    if (!query) loadBookmarks();
 
     return () => {
-      clearTimeout(timeout);
+      if (timeout) clearTimeout(timeout);
       abortController.abort();
     };
   }, [query]);
@@ -66,14 +69,15 @@ export default function SearchBookmarksCommand() {
 
   const emptyTitle = query
     ? "No Bookmarket bookmarks found"
-    : "Search Bookmarket";
+    : "No Bookmarket bookmarks yet";
   const emptyDescription = query
     ? "Try another title or URL."
-    : "Type a title, URL, or domain to search your bookmarks.";
+    : "Use Add Bookmark to save your first link.";
 
   return (
     <List
       isLoading={isLoading}
+      filtering={false}
       searchBarPlaceholder="Search titles, URLs, and domains..."
       onSearchTextChange={setSearchText}
     >

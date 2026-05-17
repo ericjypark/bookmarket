@@ -6,18 +6,48 @@ import {
   showToast,
   useNavigation,
 } from "@raycast/api";
-import { useState } from "react";
-import { createBookmark, displayTitle, userFacingError } from "./api/client";
+import { useEffect, useState } from "react";
+import {
+  Category,
+  createBookmark,
+  displayTitle,
+  listCategories,
+  userFacingError,
+} from "./api/client";
 
 type FormValues = {
   url: string;
-  categoryName?: string;
+  categoryName: string;
 };
 
 export default function AddBookmarkCommand() {
   const { pop } = useNavigation();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [urlError, setUrlError] = useState<string>();
+
+  useEffect(() => {
+    const abortController = new AbortController();
+    setIsCategoriesLoading(true);
+
+    listCategories(abortController.signal)
+      .then(setCategories)
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) return;
+
+        void showToast({
+          style: Toast.Style.Failure,
+          title: "Could not load categories",
+          message: userFacingError(error),
+        });
+      })
+      .finally(() => {
+        if (!abortController.signal.aborted) setIsCategoriesLoading(false);
+      });
+
+    return () => abortController.abort();
+  }, []);
 
   const handleSubmit = async (values: FormValues) => {
     let normalizedUrl: string;
@@ -63,7 +93,7 @@ export default function AddBookmarkCommand() {
 
   return (
     <Form
-      isLoading={isLoading}
+      isLoading={isLoading || isCategoriesLoading}
       actions={
         <ActionPanel>
           <Action.SubmitForm title="Add Bookmark" onSubmit={handleSubmit} />
@@ -78,11 +108,16 @@ export default function AddBookmarkCommand() {
         onChange={() => setUrlError(undefined)}
         autoFocus
       />
-      <Form.TextField
-        id="categoryName"
-        title="Category"
-        placeholder="Optional existing category name"
-      />
+      <Form.Dropdown id="categoryName" title="Category" defaultValue="">
+        <Form.Dropdown.Item value="" title="No Category" />
+        {categories.map((category) => (
+          <Form.Dropdown.Item
+            key={category.id}
+            value={category.name}
+            title={category.name}
+          />
+        ))}
+      </Form.Dropdown>
     </Form>
   );
 }

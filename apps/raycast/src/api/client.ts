@@ -151,6 +151,16 @@ export const searchBookmarks = async (query: string, signal?: AbortSignal) =>
     },
   });
 
+export const listBookmarks = async (signal?: AbortSignal) =>
+  requestJson<Bookmark[]>("/bookmarks", {
+    signal,
+  });
+
+export const listCategories = async (signal?: AbortSignal) =>
+  requestJson<Category[]>("/categories", {
+    signal,
+  });
+
 export const createBookmark = async ({
   url,
   categoryName,
