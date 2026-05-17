@@ -23,4 +23,9 @@ The worker exposes `/health`, consumes `metadata.fetch.requested` events from Ka
 - `METADATA_WORKER_MAX_ATTEMPTS`: max fetch attempts for retryable failures, default `3`.
 - `METADATA_WORKER_RETRY_INITIAL_BACKOFF_MS`: first retry backoff in milliseconds, doubled per retry, default `250`.
 - `METADATA_WORKER_HOST_RESOLVE_OVERRIDES`: optional comma-separated `host=ip` entries for explicitly approved self-hosted domains where public DNS resolves to a WAN address that is not reachable from the worker network. URL validation still checks the original public hostname; only the TCP dial target is overridden.
+- `METADATA_WORKER_OEMBED_ENABLED`: enables standardized oEmbed provider fallback for services listed in the oEmbed provider registry, default `true`.
+- `METADATA_WORKER_OEMBED_PROVIDERS_URL`: oEmbed provider registry URL, default `https://oembed.com/providers.json`.
+- `METADATA_WORKER_OBSCURA_ENABLED`: enables the browser-rendered metadata fallback for blocked or JavaScript-rendered pages when the `obscura` binary is available, default `true`.
+- `METADATA_WORKER_OBSCURA_PATH`: path to the Obscura CLI, default `obscura`.
+- `METADATA_WORKER_OBSCURA_STEALTH`: passes Obscura's stealth flag to the browser-rendered fallback, default `false`.
 - `DATABASE_URL` or `BOOKMARKET_DATABASE_URL`: Postgres URL. If omitted, the worker builds one from `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`.

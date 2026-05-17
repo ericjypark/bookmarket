@@ -21,6 +21,11 @@ type Config struct {
 	HTTPTimeout          time.Duration
 	MaxAttempts          int
 	RetryInitialBackoff  time.Duration
+	ObscuraEnabled       bool
+	ObscuraPath          string
+	ObscuraStealth       bool
+	OEmbedEnabled        bool
+	OEmbedProvidersURL   string
 	DatabaseURL          string
 	HostResolveOverrides map[string][]netip.Addr
 }
@@ -56,6 +61,11 @@ func Load() (Config, error) {
 		HTTPTimeout:          time.Duration(timeoutSeconds) * time.Second,
 		MaxAttempts:          maxAttempts,
 		RetryInitialBackoff:  time.Duration(retryBackoffMillis) * time.Millisecond,
+		ObscuraEnabled:       boolEnv("METADATA_WORKER_OBSCURA_ENABLED", true),
+		ObscuraPath:          firstNonEmpty(os.Getenv("METADATA_WORKER_OBSCURA_PATH"), "obscura"),
+		ObscuraStealth:       boolEnv("METADATA_WORKER_OBSCURA_STEALTH", false),
+		OEmbedEnabled:        boolEnv("METADATA_WORKER_OEMBED_ENABLED", true),
+		OEmbedProvidersURL:   firstNonEmpty(os.Getenv("METADATA_WORKER_OEMBED_PROVIDERS_URL"), "https://oembed.com/providers.json"),
 		DatabaseURL:          databaseURL(),
 		HostResolveOverrides: hostResolveOverrides,
 	}, nil

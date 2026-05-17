@@ -48,7 +48,16 @@ func main() {
 		}
 		defer metadataStore.Close()
 
-		metadataWorker = worker.New(cfg, fetcher.NewWithHostResolveOverrides(cfg.HTTPTimeout, cfg.HostResolveOverrides), metadataStore)
+		metadataFetcher := fetcher.NewWithOptions(fetcher.Options{
+			Timeout:              cfg.HTTPTimeout,
+			HostResolveOverrides: cfg.HostResolveOverrides,
+			ObscuraEnabled:       cfg.ObscuraEnabled,
+			ObscuraPath:          cfg.ObscuraPath,
+			ObscuraStealth:       cfg.ObscuraStealth,
+			OEmbedProvidersURL:   cfg.OEmbedProvidersURL,
+			OEmbedDisabled:       !cfg.OEmbedEnabled,
+		})
+		metadataWorker = worker.New(cfg, metadataFetcher, metadataStore)
 		defer metadataWorker.Close()
 
 		go metadataWorker.Run(ctx)
