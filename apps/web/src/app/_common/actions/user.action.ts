@@ -5,16 +5,25 @@ import { type User } from '~/app/(pages)/(auth)/types';
 import { getAuthCookie } from '../utils/get-auth-cookie';
 import { http } from '../utils/http';
 
+type UserProfileResponse = User & {
+  pictureUrl?: string | null;
+};
+
+const normalizeUser = (user: UserProfileResponse): User => ({
+  ...user,
+  picture: user.picture ?? user.pictureUrl ?? '',
+});
+
 export const getMe = async (): Promise<User | null> => {
   try {
-    const user: User = await http
+    const user: UserProfileResponse = await http
       .get('users/me', {
         headers: {
           Cookie: await getAuthCookie(),
         },
       })
       .json();
-    return user;
+    return normalizeUser(user);
   } catch (error) {
     Sentry.captureException(error);
     return null;
@@ -23,8 +32,8 @@ export const getMe = async (): Promise<User | null> => {
 
 export const updateUserProfile = async (updatedUserInfo: Pick<User, 'username' | 'firstName' | 'lastName'>) => {
   try {
-    const user: User = await http
-      .patch('users', {
+    const user: UserProfileResponse = await http
+      .patch('users/me', {
         headers: {
           Cookie: await getAuthCookie(),
         },
@@ -32,7 +41,7 @@ export const updateUserProfile = async (updatedUserInfo: Pick<User, 'username' |
       })
       .json();
 
-    return user;
+    return normalizeUser(user);
   } catch (error) {
     Sentry.captureException(error);
     throw new Error(JSON.stringify(error));

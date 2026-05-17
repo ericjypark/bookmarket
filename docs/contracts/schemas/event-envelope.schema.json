@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bookmarket.local/schemas/event-envelope.schema.json",
+  "title": "BookmarketEventEnvelope",
+  "type": "object",
+  "required": [
+    "eventId",
+    "eventType",
+    "eventVersion",
+    "occurredAt",
+    "producer",
+    "idempotencyKey",
+    "subject",
+    "payload"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "bookmark.created",
+        "bookmark.updated",
+        "bookmark.deleted",
+        "bookmark.category_changed",
+        "metadata.fetch.requested",
+        "metadata.fetch.completed",
+        "metadata.fetch.failed",
+        "event.dead_lettered",
+        "search.index.requested",
+        "search.delete.requested"
+      ]
+    },
+    "eventVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "enum": ["services/api", "services/metadata-worker"]
+    },
+    "traceId": {
+      "type": "string"
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 8
+    },
+    "subject": {
+      "type": "object",
+      "required": ["type", "id"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bookmark", "metadata", "search", "collection", "listing"]
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "payload": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/bookmarkCreated"
+        },
+        {
+          "$ref": "#/$defs/bookmarkUpdated"
+        },
+        {
+          "$ref": "#/$defs/bookmarkDeleted"
+        },
+        {
+          "$ref": "#/$defs/metadataFetchRequested"
+        },
+        {
+          "$ref": "#/$defs/metadataFetchCompleted"
+        },
+        {
+          "$ref": "#/$defs/metadataFetchFailed"
+        },
+        {
+          "$ref": "#/$defs/deadLetter"
+        },
+        {
+          "$ref": "#/$defs/searchIndexRequested"
+        },
+        {
+          "$ref": "#/$defs/searchDeleteRequested"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "bookmarkCreated": {
+      "type": "object",
+      "required": ["bookmarkId", "userId", "url", "metadataVersion"],
+      "additionalProperties": false,
+      "properties": {
+        "bookmarkId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "userId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "categoryId": {
+          "type": ["string", "null"],
+          "format": "uuid"
+        },
+        "metadataVersion": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "bookmarkUpdated": {
+      "type": "object",
+      "required": ["bookmarkId", "userId", "changedFields"],
+      "additionalProperties": false,
+      "properties": {
+        "bookmarkId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "userId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "changedFields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "bookmarkDeleted": {
+      "type": "object",
+      "required": ["bookmarkId", "userId"],
+      "additionalProperties": false,
+      "properties": {
+        "bookmarkId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "userId": {
+          "$ref": "#/$defs/uuid"
+        }
+      }
+    },
+    "metadataFetchRequested": {
+      "type": "object",
+      "required": ["bookmarkId", "userId", "url", "metadataVersion", "requestedBy"],
+      "additionalProperties": false,
+      "properties": {
+        "bookmarkId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "userId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "metadataVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requestedBy": {
+          "type": "string"
+        }
+      }
+    },
+    "metadataFetchCompleted": {
+      "type": "object",
+      "required": ["bookmarkId", "metadataVersion", "title", "fetchedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "bookmarkId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "metadataVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "canonicalUrl": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": ["string", "null"]
+        },
+        "faviconUrl": {
+          "type": ["string", "null"],
+          "format": "uri"
+        },
+        "fetchedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "metadataFetchFailed": {
+      "type": "object",
+      "required": ["bookmarkId", "metadataVersion", "failureCode", "failureMessage", "retryable"],
+      "additionalProperties": false,
+      "properties": {
+        "bookmarkId": {
+          "$ref": "#/$defs/uuid"
+        },
+        "metadataVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "failureCode": {
+          "type": "string"
+        },
+        "failureMessage": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "deadLetter": {
+      "type": "object",
+      "required": ["originalEvent", "sourceTopic", "failureCode", "failureMessage", "attempts", "deadLetteredAt"],
+      "additionalProperties": false,
+      "properties": {
+        "originalEvent": {
+          "type": "object"
+        },
+        "sourceTopic": {
+          "type": "string"
+        },
+        "failureCode": {
+          "type": "string"
+        },
+        "failureMessage": {
+          "type": "string"
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deadLetteredAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "searchIndexRequested": {
+      "type": "object",
+      "required": ["documentType", "documentId"],
+      "additionalProperties": false,
+      "properties": {
+        "documentType": {
+          "type": "string",
+          "enum": ["bookmark", "collection", "listing"]
+        },
+        "documentId": {
+          "type": "string"
+        }
+      }
+    },
+    "searchDeleteRequested": {
+      "type": "object",
+      "required": ["documentType", "documentId"],
+      "additionalProperties": false,
+      "properties": {
+        "documentType": {
+          "type": "string",
+          "enum": ["bookmark", "collection", "listing"]
+        },
+        "documentId": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

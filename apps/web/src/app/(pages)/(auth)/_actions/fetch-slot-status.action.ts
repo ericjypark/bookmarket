@@ -11,7 +11,7 @@ interface SlotStatus {
 
 export const fetchSlotStatus = async () => {
   try {
-    const response = await http.get('slots/status').json<SlotStatus>();
+    const response = await http.get('signup-slots').json<SlotStatus>();
     return response;
   } catch (error) {
     Sentry.captureException(error);

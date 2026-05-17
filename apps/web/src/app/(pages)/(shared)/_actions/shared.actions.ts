@@ -6,7 +6,9 @@ import { http } from '~/app/_common/utils/http';
 import { tryCatch } from '~/app/_common/utils/try-catch';
 
 export const getSharedUsersCategories = async (username: string) => {
-  const { data, error } = await tryCatch(http.get<Category[]>(`categories/s/${username}`).json());
+  const { data, error } = await tryCatch(
+    http.get<Category[]>(`public-profiles/${encodeURIComponent(username)}/categories`).json(),
+  );
 
   if (error) {
     Sentry.captureException(`${username} does not exist or is a private profile`);
@@ -17,7 +19,9 @@ export const getSharedUsersCategories = async (username: string) => {
 };
 
 export const getSharedUsersBookmarks = async (username: string) => {
-  const { data, error } = await tryCatch(http.get<Bookmark[]>(`bookmarks/s/${username}`).json());
+  const { data, error } = await tryCatch(
+    http.get<Bookmark[]>(`public-profiles/${encodeURIComponent(username)}/bookmarks`).json(),
+  );
 
   if (error) {
     Sentry.captureException(`${username} does not exist or is a private profile`);

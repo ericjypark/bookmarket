@@ -1,36 +1,19 @@
-# Dependencies - let Docker install these fresh
+.git
+.github
+.DS_Store
+
 node_modules
 **/node_modules
-
-# Build outputs - will be built in container
 **/.next
-**/dist
-**/.turbo
-
-# Git
-.git
-.gitignore
-
-# IDE/Editor
-.vscode
-.idea
-*.swp
-*.swo
-
-# Environment files (use secrets instead)
-**/.env.local
-**/.env.development.local
-**/.env.test.local
-**/.env.production.local
-
-# Logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-
-# Testing
 **/coverage
+**/dist
+**/target
+**/bin
 
-# OS
-.DS_Store
-Thumbs.db
+artifacts
+tests/playwright/.auth
+tests/playwright/test-results
+tests/playwright/playwright-report
+
+*.log
+*.tsbuildinfo

@@ -11,7 +11,7 @@ export const loginUser = async (state: { error: string; field: string } | null, 
 
   try {
     const response: TokenResponse = await http
-      .post(`authentication/signin`, {
+      .post(`auth/login`, {
         json: { email, password },
       })
       .json();

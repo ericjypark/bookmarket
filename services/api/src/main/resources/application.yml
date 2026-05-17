@@ -1,0 +1,65 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${BOOKMARKET_DATABASE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:bookmarket}}
+    username: ${POSTGRES_USER:bookmarket}
+    password: ${POSTGRES_PASSWORD:bookmarket}
+    hikari:
+      initialization-fail-timeout: 0
+  flyway:
+    enabled: ${BOOKMARKET_FLYWAY_ENABLED:false}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  redis:
+    url: ${REDIS_URL:redis://localhost:6379}
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+bookmarket:
+  auth:
+    issuer: ${BOOKMARKET_AUTH_ISSUER:bookmarket-v2}
+    audience: ${BOOKMARKET_AUTH_AUDIENCE:bookmarket-web}
+    secret: ${BOOKMARKET_AUTH_SECRET:dev-only-bookmarket-v2-secret-change-before-production}
+    access-token-ttl-seconds: ${BOOKMARKET_ACCESS_TOKEN_TTL_SECONDS:900}
+    refresh-token-ttl-seconds: ${BOOKMARKET_REFRESH_TOKEN_TTL_SECONDS:3024000}
+    google-client-id: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:}
+    google-client-secret: ${GOOGLE_CLIENT_SECRET:}
+    github-client-id: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:}
+    github-client-secret: ${GITHUB_CLIENT_SECRET:}
+  kafka:
+    enabled: ${BOOKMARKET_KAFKA_ENABLED:false}
+    bookmark-events-topic: ${BOOKMARKET_KAFKA_BOOKMARK_EVENTS_TOPIC:bookmark.events}
+    metadata-jobs-topic: ${BOOKMARKET_KAFKA_METADATA_JOBS_TOPIC:metadata.jobs}
+    metadata-events-topic: ${BOOKMARKET_KAFKA_METADATA_EVENTS_TOPIC:metadata.events}
+    metadata-events-consumer-group: ${BOOKMARKET_KAFKA_METADATA_EVENTS_CONSUMER_GROUP:bookmarket-api-metadata-events}
+  search:
+    elasticsearch-enabled: ${BOOKMARKET_SEARCH_ELASTICSEARCH_ENABLED:false}
+    elasticsearch-url: ${ELASTICSEARCH_URL:http://localhost:9200}
+    bookmarks-index: ${BOOKMARKET_SEARCH_BOOKMARKS_INDEX:bookmarket-bookmarks}
+    rebuild-token: ${BOOKMARKET_SEARCH_REBUILD_TOKEN:}
+  redis:
+    enabled: ${BOOKMARKET_REDIS_ENABLED:false}
+    namespace: ${BOOKMARKET_REDIS_NAMESPACE:bookmarket:v2}
+    auth-rate-limit-max-requests: ${BOOKMARKET_AUTH_RATE_LIMIT_MAX_REQUESTS:30}
+    auth-rate-limit-window-seconds: ${BOOKMARKET_AUTH_RATE_LIMIT_WINDOW_SECONDS:60}
+    idempotency-ttl-seconds: ${BOOKMARKET_IDEMPOTENCY_TTL_SECONDS:86400}
+    metadata-job-status-ttl-seconds: ${BOOKMARKET_METADATA_JOB_STATUS_TTL_SECONDS:3600}
+    oauth-state-ttl-seconds: ${BOOKMARKET_OAUTH_STATE_TTL_SECONDS:600}
+    public-profile-cache-ttl-seconds: ${BOOKMARKET_PUBLIC_PROFILE_CACHE_TTL_SECONDS:60}

@@ -5,7 +5,7 @@ import ky from 'ky';
 const options = {
   timeout: 30000,
   retry: 2,
-  prefixUrl: process.env.NEXT_PUBLIC_BASE_URL,
+  prefixUrl: `${(process.env.BOOKMARKET_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
     credentials: 'include',

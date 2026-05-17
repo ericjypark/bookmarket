@@ -1,0 +1,66 @@
+name: Build Images
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: web
+            image: ghcr.io/eric-jy-park/bookmarket-v2-web
+            dockerfile: apps/web/Dockerfile
+          - service: api
+            image: ghcr.io/eric-jy-park/bookmarket-v2-api
+            dockerfile: services/api/Dockerfile
+          - service: metadata-worker
+            image: ghcr.io/eric-jy-park/bookmarket-v2-metadata-worker
+            dockerfile: services/metadata-worker/Dockerfile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID || secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ vars.NEXT_PUBLIC_GITHUB_CLIENT_ID || secrets.NEXT_PUBLIC_GITHUB_CLIENT_ID }}
+            NEXT_PUBLIC_GITHUB_REDIRECT_URI=${{ vars.NEXT_PUBLIC_GITHUB_REDIRECT_URI || secrets.NEXT_PUBLIC_GITHUB_REDIRECT_URI }}

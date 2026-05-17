@@ -8,6 +8,7 @@ import { fetchGithubUserInfo } from '../../_actions/fetch-github-user-info.actio
 export default function GithubOAuthPage() {
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
+  const state = searchParams.get('state');
 
   React.useEffect(() => {
     if (!code) {
@@ -15,8 +16,8 @@ export default function GithubOAuthPage() {
     }
 
     trackAuthEvent.loginSuccess('github');
-    void fetchGithubUserInfo(code);
-  }, [code]);
+    void fetchGithubUserInfo(code, state);
+  }, [code, state]);
 
   return null;
 }

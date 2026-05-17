@@ -1,0 +1,40 @@
+{
+  "extends": "@repo/typescript-config/nextjs",
+  "compilerOptions": {
+    "target": "es2022",
+    "moduleDetection": "force",
+    "moduleResolution": "Bundler",
+    "checkJs": true,
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "noEmit": true
+  },
+  "include": [
+    ".eslintrc.cjs",
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.cjs",
+    "**/*.js",
+    "**/*.mjs",
+    ".next/types/**/*.ts",
+    "src/env.mjs",
+    "next.config.mjs",
+    "prettier.config.mjs"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/public/sw.js",
+    "**/public/sw.js.map",
+    "**/public/workbox-*.js",
+    "**/public/workbox-*.js.map"
+  ]
+}
