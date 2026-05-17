@@ -1,5 +1,6 @@
 import { withSentryConfig } from '@sentry/nextjs';
-import withPWA from 'next-pwa';
+import withPWA from '@ducanh2912/next-pwa';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
@@ -7,8 +8,10 @@ import withPWA from 'next-pwa';
  */
 await import('./src/env.mjs');
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  outputFileTracingRoot: fileURLToPath(new URL('../..', import.meta.url)),
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
@@ -55,9 +58,11 @@ const nextConfig = {
 const pwaConfig = withPWA({
   dest: 'public',
   register: true,
-  skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  // @ts-ignore
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
+  },
 })(nextConfig);
 
 export default withSentryConfig(pwaConfig, {
@@ -65,10 +70,14 @@ export default withSentryConfig(pwaConfig, {
   project: 'bookmarket',
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  reactComponentAnnotation: {
-    enabled: true,
-  },
   tunnelRoute: '/monitoring',
-  disableLogger: true,
-  automaticVercelMonitors: true,
+  webpack: {
+    reactComponentAnnotation: {
+      enabled: true,
+    },
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    automaticVercelMonitors: true,
+  },
 });
