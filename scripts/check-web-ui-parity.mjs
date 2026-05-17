@@ -28,6 +28,22 @@ const allowedV2OnlyFiles = new Set([
   'src/app/health/route.ts',
 ]);
 
+const allowedAsyncMetadataUiDiffs = new Set([
+  'src/app/(pages)/(home)/home/_components/bookmark-card.tsx',
+  'src/app/(pages)/(home)/home/_components/bookmark-input.tsx',
+  'src/app/(pages)/(home)/home/_components/bookmark-list.tsx',
+  'src/app/(pages)/(home)/home/_hooks/use-bookmark-context.tsx',
+  'src/app/(pages)/(home)/home/_hooks/use-bookmark-refetch.tsx',
+  'src/app/_common/interfaces/bookmark.interface.ts',
+  'src/app/_common/utils/bookmark-metadata.ts',
+  'src/app/_common/utils/url.ts',
+]);
+
+const allowedSessionRoutingDiffs = new Set([
+  'src/middleware.ts',
+  'src/path.ts',
+]);
+
 const allowedAdapterDiffs = new Set([
   'src/app/(pages)/(auth)/_actions/create-user.action.ts',
   'src/app/(pages)/(auth)/_actions/create-oauth-state.action.ts',
@@ -42,12 +58,14 @@ const allowedAdapterDiffs = new Set([
   'src/app/(pages)/(shared)/_actions/shared.actions.ts',
   'src/app/_common/actions/auth.action.ts',
   'src/app/_common/actions/bookmark.action.ts',
+  'src/app/_common/utils/auth-cookies.ts',
   'src/app/_common/actions/user.action.ts',
   'src/app/_common/utils/http.ts',
 ]);
 
 const allowedV2OnlyAdapterFiles = new Set([
   'src/app/(pages)/(auth)/_actions/create-oauth-state.action.ts',
+  'src/app/_common/utils/auth-cookies.ts',
 ]);
 
 const generatedPublicArtifacts = new Set([
@@ -151,6 +169,8 @@ for (const relativePath of exactParityPaths) {
       ignoredFiles.has(file) ||
       generatedPublicArtifacts.has(file) ||
       allowedAdapterDiffs.has(file) ||
+      allowedAsyncMetadataUiDiffs.has(file) ||
+      allowedSessionRoutingDiffs.has(file) ||
       allowedV2OnlyFiles.has(file)
     ) continue;
 
@@ -178,6 +198,8 @@ await assertVisibleAdapterStringsAndRedirects();
 await assertAllowedV2OnlyFilesAreNonVisual();
 await assertAllowedAdapterDiffsAreNonVisual();
 await assertAsyncBookmarkCreationBoundary();
+await assertAsyncMetadataUiDiffs();
+await assertSessionRoutingDiffs();
 
 if (failures.length > 0) {
   console.error('Web UI parity check failed:');
@@ -189,6 +211,8 @@ console.log([
   'Web UI parity check passed.',
   `Exact v1 source/design roots checked: ${exactParityPaths.length}.`,
   `Allowed v2 API adapter diffs: ${allowedAdapterDiffs.size}.`,
+  `Allowed async metadata UI diffs: ${allowedAsyncMetadataUiDiffs.size}.`,
+  `Allowed session routing diffs: ${allowedSessionRoutingDiffs.size}.`,
   `Allowed v2-only adapter helpers: ${allowedV2OnlyAdapterFiles.size}.`,
   `Allowed v2-only route handlers: ${allowedV2OnlyFiles.size}.`,
   `Generated PWA artifacts ignored: ${generatedPublicArtifacts.size}.`,
@@ -845,19 +869,23 @@ async function assertVisibleAdapterStringsAndRedirects() {
       "redirect('/')",
     ],
     'src/app/_common/actions/auth.action.ts': [
-      "ACCESS_TOKEN_COOKIE_NAME = 'access_token'",
-      "REFRESH_TOKEN_COOKIE_NAME = 'refresh_token'",
       "post('auth/refresh'",
       "post('auth/logout'",
-      'maxAge: 604800',
-      'maxAge: 3024000',
+      'getAccessTokenCookieOptions()',
+      'getRefreshTokenCookieOptions()',
+      'getExpiredAuthCookieOptions()',
+      "redirect('/')",
+    ],
+    'src/app/_common/utils/auth-cookies.ts': [
+      "ACCESS_TOKEN_COOKIE_NAME = 'access_token'",
+      "REFRESH_TOKEN_COOKIE_NAME = 'refresh_token'",
+      'ACCESS_TOKEN_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60',
+      'REFRESH_TOKEN_COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60',
+      'BOOKMARKET_COOKIE_DOMAIN',
+      'NEXT_PUBLIC_DOMAIN',
       "path: '/'",
       'httpOnly: true',
       "sameSite: 'lax'",
-      "domain: isLocalhost ? undefined : `.${process.env.NEXT_PUBLIC_DOMAIN}`",
-      'cookieStore.delete(ACCESS_TOKEN_COOKIE_NAME)',
-      'cookieStore.delete(REFRESH_TOKEN_COOKIE_NAME)',
-      "redirect('/')",
     ],
     'src/app/_common/actions/user.action.ts': [
       "picture: user.picture ?? user.pictureUrl ?? ''",
@@ -939,6 +967,100 @@ async function assertAsyncBookmarkCreationBoundary() {
   ]) {
     if (!bookmarkService.includes(marker)) {
       failures.push(`Bookmark service async creation boundary is missing marker: ${marker}`);
+    }
+  }
+}
+
+async function assertAsyncMetadataUiDiffs() {
+  const requiredMarkersByFile = {
+    'src/app/(pages)/(home)/home/_components/bookmark-card.tsx': [
+      'isBookmarkMetadataActive(bookmark)',
+      "aria-label='Fetching metadata'",
+      'getFallbackFaviconUrl(bookmark.url)',
+      'const BookmarkFavicon =',
+    ],
+    'src/app/(pages)/(home)/home/_components/bookmark-input.tsx': [
+      'buildOptimisticBookmark',
+      'queryClient.setQueryData(bookmarksQuery().queryKey',
+      "metadataStatus: 'PENDING'",
+      'formRef.current?.reset()',
+    ],
+    'src/app/(pages)/(home)/home/_components/bookmark-list.tsx': [
+      'hasPendingMetadata',
+      'window.setInterval',
+      'void refetch()',
+    ],
+    'src/app/(pages)/(home)/home/_hooks/use-bookmark-context.tsx': [
+      'isTransientBookmark',
+      'disabled: isCurrentBookmarkRefetching || isTransientBookmark',
+    ],
+    'src/app/(pages)/(home)/home/_hooks/use-bookmark-refetch.tsx': [
+      "metadataStatus: 'PENDING'",
+      "toast.message('Refreshing metadata in the background')",
+      "queryClient.invalidateQueries({ queryKey: ['bookmarks'] })",
+    ],
+    'src/app/_common/interfaces/bookmark.interface.ts': [
+      'metadataUpdatedAt?: Date',
+      'isOptimistic?: boolean',
+      'export interface MetadataJobStatus',
+    ],
+    'src/app/_common/utils/bookmark-metadata.ts': [
+      'activePendingWindowMs',
+      'isBookmarkMetadataActive',
+      'bookmark.metadataStatus !==',
+    ],
+    'src/app/_common/utils/url.ts': [
+      'getFallbackFaviconUrl',
+      'normalizeBookmarkUrl',
+      'isValidBookmarkUrl',
+    ],
+  };
+
+  for (const file of allowedAsyncMetadataUiDiffs) {
+    const source = await readText(path.join(v2WebRoot, file));
+    const markers = requiredMarkersByFile[file];
+    if (!markers) {
+      failures.push(`Async metadata UI diff is missing guard markers: ${file}`);
+      continue;
+    }
+
+    for (const marker of markers) {
+      if (!source.includes(marker)) {
+        failures.push(`Async metadata UI diff marker missing in ${file}: ${marker}`);
+      }
+    }
+  }
+}
+
+async function assertSessionRoutingDiffs() {
+  const requiredMarkersByFile = {
+    'src/middleware.ts': [
+      'refreshSession',
+      'nextWithAuthCookies',
+      'redirectWithAuthCookies',
+      'redirectToLogin',
+      'BOOKMARKET_API_BASE_URL',
+      'getRefreshTokenCookieOptions',
+    ],
+    'src/path.ts': [
+      "'/health'",
+      "'/signup'",
+      "'/login'",
+    ],
+  };
+
+  for (const file of allowedSessionRoutingDiffs) {
+    const source = await readText(path.join(v2WebRoot, file));
+    const markers = requiredMarkersByFile[file];
+    if (!markers) {
+      failures.push(`Session routing diff is missing guard markers: ${file}`);
+      continue;
+    }
+
+    for (const marker of markers) {
+      if (!source.includes(marker)) {
+        failures.push(`Session routing diff marker missing in ${file}: ${marker}`);
+      }
     }
   }
 }

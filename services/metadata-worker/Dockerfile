@@ -13,16 +13,21 @@ FROM alpine:3.21 AS obscura
 ARG TARGETARCH
 RUN apk add --no-cache curl tar
 RUN set -eux; \
+    mkdir -p /tmp/obscura /out; \
     case "$TARGETARCH" in \
       amd64) obscura_arch="x86_64-linux" ;; \
-      arm64) obscura_arch="aarch64-linux" ;; \
+      arm64) obscura_arch="" ;; \
       *) echo "unsupported TARGETARCH=$TARGETARCH" >&2; exit 1 ;; \
     esac; \
-    curl -fsSL "https://github.com/h4ckf0r0day/obscura/releases/latest/download/obscura-${obscura_arch}.tar.gz" -o /tmp/obscura.tar.gz; \
-    mkdir -p /tmp/obscura /out; \
-    tar -xzf /tmp/obscura.tar.gz -C /tmp/obscura; \
-    find /tmp/obscura -type f -name obscura -exec cp {} /out/obscura \;; \
-    chmod +x /out/obscura
+    if [ -n "$obscura_arch" ]; then \
+      curl -fsSL "https://github.com/h4ckf0r0day/obscura/releases/latest/download/obscura-${obscura_arch}.tar.gz" -o /tmp/obscura.tar.gz; \
+      tar -xzf /tmp/obscura.tar.gz -C /tmp/obscura; \
+      find /tmp/obscura -type f -name obscura -exec cp {} /out/obscura \;; \
+      chmod +x /out/obscura; \
+    else \
+      echo "Obscura does not currently publish a Linux arm64 release archive; building without browser fallback binary."; \
+      touch /out/.obscura-linux-arm64-unavailable; \
+    fi
 
 FROM ubuntu:22.04 AS runner
 RUN apt-get update \
@@ -31,7 +36,7 @@ RUN apt-get update \
     && useradd --system --no-create-home bookmarket
 
 COPY --from=builder /out/metadata-worker /usr/local/bin/metadata-worker
-COPY --from=obscura /out/obscura /usr/local/bin/obscura
+COPY --from=obscura /out/ /usr/local/bin/
 
 USER bookmarket
 EXPOSE 8081
