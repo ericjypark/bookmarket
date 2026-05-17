@@ -163,10 +163,8 @@ export async function middleware(request: NextRequest) {
   if (subdomain) {
     console.log(`Detected subdomain: ${subdomain}`);
 
-    const protocol = request.nextUrl.protocol;
-    const newUrl = new URL(`/s/${subdomain}`, `${protocol}//${mainDomain}`);
-
-    newUrl.search = request.nextUrl.search;
+    const newUrl = request.nextUrl.clone();
+    newUrl.pathname = `/s/${subdomain}`;
     if (request.nextUrl.pathname !== '/') {
       newUrl.pathname = `${newUrl.pathname}${request.nextUrl.pathname}`;
     }
