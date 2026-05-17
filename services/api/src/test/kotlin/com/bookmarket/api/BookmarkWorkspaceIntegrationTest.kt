@@ -408,6 +408,7 @@ class BookmarkWorkspaceIntegrationTest {
             jsonPath("$[0].token") { doesNotExist() }
         }
 
+        fakeBookmarkSearchIndex.searchResult = emptyList()
         mockMvc.get("/api/v1/search/bookmarks?q=raycast") {
             bearer(apiToken)
         }.andExpect {
@@ -415,6 +416,7 @@ class BookmarkWorkspaceIntegrationTest {
             jsonPath("$.length()") { value(1) }
             jsonPath("$[0].id") { value(bookmark["id"].asText()) }
         }
+        fakeBookmarkSearchIndex.searchResult = null
 
         mockMvc.get("/api/v1/bookmarks") {
             bearer(apiToken)
@@ -1248,9 +1250,10 @@ class FakeOAuthProviderClient : OAuthProviderClient {
 class FakeBookmarkSearchIndex : BookmarkSearchIndex {
     val indexed = mutableListOf<IndexedBookmark>()
     val deleted = mutableListOf<UUID>()
+    var searchResult: List<BookmarkDto>? = null
 
     override fun search(userId: UUID, query: String): List<BookmarkDto>? =
-        null
+        searchResult
 
     override fun index(bookmark: BookmarkDto, userId: UUID) {
         indexed.add(IndexedBookmark(bookmark = bookmark, userId = userId))
@@ -1263,6 +1266,7 @@ class FakeBookmarkSearchIndex : BookmarkSearchIndex {
     fun clear() {
         indexed.clear()
         deleted.clear()
+        searchResult = null
     }
 
     data class IndexedBookmark(

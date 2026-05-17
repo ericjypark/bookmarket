@@ -13,8 +13,12 @@ class SearchService(
         if (query.trim().isBlank()) {
             return emptyList()
         }
-        return bookmarkSearchIndex.search(userId, query)
-            ?: bookmarkSearchRepository.search(userId, query)
+        val indexedResults = bookmarkSearchIndex.search(userId, query)
+        if (!indexedResults.isNullOrEmpty()) {
+            return indexedResults
+        }
+
+        return bookmarkSearchRepository.search(userId, query)
     }
 
     fun indexBookmark(bookmark: BookmarkDto, userId: UUID) {
