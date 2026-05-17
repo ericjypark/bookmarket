@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/netip"
 	"net/url"
 	"os"
 	"strconv"
@@ -21,6 +22,7 @@ type Config struct {
 	MaxAttempts          int
 	RetryInitialBackoff  time.Duration
 	DatabaseURL          string
+	HostResolveOverrides map[string][]netip.Addr
 }
 
 func Load() (Config, error) {
@@ -33,6 +35,10 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 	retryBackoffMillis, err := intEnv("METADATA_WORKER_RETRY_INITIAL_BACKOFF_MS", 250)
+	if err != nil {
+		return Config{}, err
+	}
+	hostResolveOverrides, err := parseHostResolveOverrides(os.Getenv("METADATA_WORKER_HOST_RESOLVE_OVERRIDES"))
 	if err != nil {
 		return Config{}, err
 	}
@@ -51,6 +57,7 @@ func Load() (Config, error) {
 		MaxAttempts:          maxAttempts,
 		RetryInitialBackoff:  time.Duration(retryBackoffMillis) * time.Millisecond,
 		DatabaseURL:          databaseURL(),
+		HostResolveOverrides: hostResolveOverrides,
 	}, nil
 }
 
@@ -102,6 +109,37 @@ func intEnv(name string, fallback int) (int, error) {
 		return 0, fmt.Errorf("%s must be positive", name)
 	}
 	return parsed, nil
+}
+
+func parseHostResolveOverrides(value string) (map[string][]netip.Addr, error) {
+	result := map[string][]netip.Addr{}
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return result, nil
+	}
+
+	for _, entry := range strings.Split(value, ",") {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+
+		host, rawIP, ok := strings.Cut(entry, "=")
+		if !ok {
+			return nil, fmt.Errorf("METADATA_WORKER_HOST_RESOLVE_OVERRIDES entry %q must use host=ip", entry)
+		}
+		host = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(host)), ".")
+		if host == "" {
+			return nil, fmt.Errorf("METADATA_WORKER_HOST_RESOLVE_OVERRIDES entry %q has an empty host", entry)
+		}
+		ip, err := netip.ParseAddr(strings.TrimSpace(rawIP))
+		if err != nil {
+			return nil, fmt.Errorf("METADATA_WORKER_HOST_RESOLVE_OVERRIDES entry %q has an invalid IP: %w", entry, err)
+		}
+		result[host] = append(result[host], ip.Unmap())
+	}
+
+	return result, nil
 }
 
 func databaseURL() string {

@@ -74,13 +74,14 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TAG: ${{ github.sha }}
+          METADATA_WORKER_HOST_RESOLVE_OVERRIDES: ${{ vars.METADATA_WORKER_HOST_RESOLVE_OVERRIDES || secrets.METADATA_WORKER_HOST_RESOLVE_OVERRIDES }}
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           script_stop: true
           command_timeout: 15m
-          envs: GHCR_TOKEN,GHCR_USER,GHCR_TAG
+          envs: GHCR_TOKEN,GHCR_USER,GHCR_TAG,METADATA_WORKER_HOST_RESOLVE_OVERRIDES
           script: |
             set -eu
 
@@ -100,6 +101,11 @@ jobs:
               --dry-run=client -o yaml | $KUBECTL apply -f -
             $KUBECTL -n bookmarket patch serviceaccount default --type=merge \
               -p '{"imagePullSecrets":[{"name":"ghcr-pull"}]}'
+
+            if [ -n "${METADATA_WORKER_HOST_RESOLVE_OVERRIDES:-}" ]; then
+              $KUBECTL -n bookmarket set env deployment/metadata-worker \
+                METADATA_WORKER_HOST_RESOLVE_OVERRIDES="$METADATA_WORKER_HOST_RESOLVE_OVERRIDES"
+            fi
 
             $KUBECTL -n bookmarket set image deployment/web \
               web="ghcr.io/ericjypark/bookmarket-v2-web:${GHCR_TAG}"

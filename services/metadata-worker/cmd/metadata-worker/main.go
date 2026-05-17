@@ -48,7 +48,7 @@ func main() {
 		}
 		defer metadataStore.Close()
 
-		metadataWorker = worker.New(cfg, fetcher.New(cfg.HTTPTimeout), metadataStore)
+		metadataWorker = worker.New(cfg, fetcher.NewWithHostResolveOverrides(cfg.HTTPTimeout, cfg.HostResolveOverrides), metadataStore)
 		defer metadataWorker.Close()
 
 		go metadataWorker.Run(ctx)

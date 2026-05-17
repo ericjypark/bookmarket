@@ -1,8 +1,13 @@
 package fetcher
 
 import (
+	"context"
+	"net"
+	"net/netip"
 	"net/url"
+	"strconv"
 	"testing"
+	"time"
 )
 
 func TestValidatePublicURLRejectsRestrictedTargets(t *testing.T) {
@@ -48,5 +53,42 @@ func TestParseHTMLMetadata(t *testing.T) {
 	}
 	if result.FaviconURL != "https://example.com/favicon.ico" {
 		t.Fatalf("unexpected favicon URL: %q", result.FaviconURL)
+	}
+}
+
+func TestSSRFSafeDialerUsesHostResolveOverride(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+
+	accepted := make(chan error, 1)
+	go func() {
+		conn, err := listener.Accept()
+		if err != nil {
+			accepted <- err
+			return
+		}
+		_ = conn.Close()
+		accepted <- nil
+	}()
+
+	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
+	dialer := ssrfSafeDialer{
+		timeout: time.Second,
+		hostResolveOverrides: map[string][]netip.Addr{
+			"example.com": {netip.MustParseAddr("127.0.0.1")},
+		},
+	}
+
+	conn, err := dialer.DialContext(context.Background(), "tcp", net.JoinHostPort("example.com", port))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = conn.Close()
+
+	if err := <-accepted; err != nil {
+		t.Fatal(err)
 	}
 }

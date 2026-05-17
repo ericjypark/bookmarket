@@ -52,6 +52,12 @@ variable "metadata_worker_image" {
   default     = "ghcr.io/ericjypark/bookmarket-v2-metadata-worker:latest"
 }
 
+variable "metadata_worker_host_resolve_overrides" {
+  type        = string
+  description = "Comma-separated host=ip entries for metadata-worker self-hosted domain fetches when public WAN hairpin routing is unavailable."
+  default     = ""
+}
+
 variable "app_secret_name" {
   type        = string
   description = "Kubernetes Secret containing app credentials."

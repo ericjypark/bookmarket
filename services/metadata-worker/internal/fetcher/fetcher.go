@@ -40,10 +40,15 @@ type Fetcher struct {
 }
 
 func New(timeout time.Duration) *Fetcher {
+	return NewWithHostResolveOverrides(timeout, nil)
+}
+
+func NewWithHostResolveOverrides(timeout time.Duration, overrides map[string][]netip.Addr) *Fetcher {
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&ssrfSafeDialer{
-			timeout: timeout,
+			timeout:              timeout,
+			hostResolveOverrides: normalizeHostResolveOverrides(overrides),
 		}).DialContext,
 		ResponseHeaderTimeout: timeout,
 		IdleConnTimeout:       30 * time.Second,
@@ -185,7 +190,8 @@ func ValidatePublicURL(rawURL string) error {
 }
 
 type ssrfSafeDialer struct {
-	timeout time.Duration
+	timeout              time.Duration
+	hostResolveOverrides map[string][]netip.Addr
 }
 
 func (d *ssrfSafeDialer) DialContext(ctx context.Context, network string, address string) (net.Conn, error) {
@@ -193,14 +199,16 @@ func (d *ssrfSafeDialer) DialContext(ctx context.Context, network string, addres
 	if err != nil {
 		return nil, err
 	}
-	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", host)
+
+	ips, usingOverride, err := d.resolveHost(ctx, host)
 	if err != nil {
 		return nil, err
 	}
+
 	var lastErr error
 	dialer := net.Dialer{Timeout: d.timeout}
 	for _, ip := range ips {
-		if !isPublicIP(ip) {
+		if !usingOverride && !isPublicIP(ip) {
 			lastErr = fmt.Errorf("metadata URL resolves to a restricted address")
 			continue
 		}
@@ -214,6 +222,34 @@ func (d *ssrfSafeDialer) DialContext(ctx context.Context, network string, addres
 		return nil, lastErr
 	}
 	return nil, fmt.Errorf("metadata URL host has no usable addresses")
+}
+
+func (d *ssrfSafeDialer) resolveHost(ctx context.Context, host string) ([]netip.Addr, bool, error) {
+	if ips := d.hostResolveOverrides[normalizeHostname(host)]; len(ips) > 0 {
+		return ips, true, nil
+	}
+	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", host)
+	return ips, false, err
+}
+
+func normalizeHostResolveOverrides(overrides map[string][]netip.Addr) map[string][]netip.Addr {
+	normalized := map[string][]netip.Addr{}
+	for host, ips := range overrides {
+		normalizedHost := normalizeHostname(host)
+		if normalizedHost == "" {
+			continue
+		}
+		for _, ip := range ips {
+			if ip.IsValid() {
+				normalized[normalizedHost] = append(normalized[normalizedHost], ip.Unmap())
+			}
+		}
+	}
+	return normalized
+}
+
+func normalizeHostname(host string) string {
+	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(host)), ".")
 }
 
 func isPublicIP(addr netip.Addr) bool {

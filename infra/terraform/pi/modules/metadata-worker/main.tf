@@ -123,6 +123,10 @@ resource "kubernetes_deployment_v1" "metadata_worker" {
             name  = "METADATA_WORKER_RETRY_INITIAL_BACKOFF_MS"
             value = "250"
           }
+          env {
+            name  = "METADATA_WORKER_HOST_RESOLVE_OVERRIDES"
+            value = var.host_resolve_overrides
+          }
 
           resources {
             requests = {
