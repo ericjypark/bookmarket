@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { CheckIcon, Loader2Icon, LoaderCircleIcon, XIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -173,10 +173,10 @@ export default function UserSettingsDialog({
       onClick={e => {
         e.stopPropagation();
       }}
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
     >
       <DialogHeader className='contents space-y-0 text-left'>
         <DialogTitle className='border-b px-6 py-4 text-base'>Edit profile</DialogTitle>

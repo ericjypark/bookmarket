@@ -1,4 +1,4 @@
-import { motion, useAnimation } from 'framer-motion';
+import { motion, useAnimation } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -76,7 +76,7 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
           longPressTimer.current = null;
           animationControls.start({
             scale: 1,
-            transition: { duration: 0.2 },
+            transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] },
           });
         }
       }
@@ -113,7 +113,7 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
               onClick={handleCardClick}
               key={bookmark.id}
               className={cn(
-                'flex w-full cursor-pointer items-center gap-3 rounded-md p-2 transition-all hover:bg-muted',
+                'flex w-full cursor-pointer items-center gap-3 rounded-md p-2 transition-[background-color,filter] duration-150 ease-out hover:bg-muted',
                 isActive && 'bg-muted',
                 isBlurred && 'pointer-events-none blur-sm',
               )}
@@ -153,7 +153,7 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
       <motion.div
         key={bookmark.id}
         className={cn(
-          'flex w-full cursor-pointer select-none items-center gap-3 rounded-md p-2 transition-all sm:hidden',
+          'flex w-full cursor-pointer select-none items-center gap-3 rounded-md p-2 transition-[background-color] duration-150 ease-out sm:hidden',
           isLongPressing && 'bg-muted',
         )}
         animate={animationControls}
@@ -192,7 +192,7 @@ export const BookmarkCard = ({ bookmark, isActive, isBlurred, isViewOnly }: Book
           setIsLongPressing(false);
           animationControls.start({
             scale: isActive ? 1.05 : 1,
-            transition: { duration: 0.2 },
+            transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] },
           });
           clearTimeout(longPressTimer.current!);
           longPressTimer.current = null;
@@ -221,7 +221,9 @@ const ViewOnlyBookmarkCard = React.memo(({ bookmark }: { bookmark: Bookmark }) =
       href={bookmark.url}
       target='_blank'
       key={bookmark.id}
-      className={cn('flex w-full cursor-pointer items-center gap-3 rounded-md p-2 transition-all hover:bg-muted')}
+      className={cn(
+        'flex w-full cursor-pointer items-center gap-3 rounded-md p-2 transition-[background-color] duration-150 ease-out hover:bg-muted',
+      )}
       animate={animationControls}
       onClick={handleSharedBookmarkClick}
     >

@@ -51,7 +51,7 @@ export function BookmarkList({ bookmarks: initialBookmarks, isViewOnly }: { book
   return (
     <div className='relative flex flex-col gap-2'>
       {filteredBookmarks?.map((bookmark, index) => (
-        <BlurFade key={bookmark.id} duration={0.2} delay={0.05 + index * 0.025}>
+        <BlurFade key={bookmark.id} delay={Math.min(index, 12) * 0.025}>
           <BookmarkCard
             bookmark={bookmark}
             isActive={activeBookmarkId === bookmark.id}

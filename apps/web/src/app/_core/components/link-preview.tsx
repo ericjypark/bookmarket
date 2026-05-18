@@ -1,6 +1,6 @@
 'use client';
 import * as HoverCardPrimitive from '@radix-ui/react-hover-card';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { encode } from 'qss';
@@ -66,14 +66,14 @@ export const LinkPreview: React.FC<LinkPreviewProps> = ({
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, x: 20, scale: 0.4 }}
+              initial={{ opacity: 0, x: 8, scale: 0.95 }}
               animate={{
                 opacity: 1,
                 x: 0,
                 scale: 1,
-                transition: { type: 'spring', stiffness: 260, damping: 20 },
+                transition: { type: 'spring', stiffness: 260, damping: 22, mass: 0.6 },
               }}
-              exit={{ opacity: 0, x: 20, scale: 0.6 }}
+              exit={{ opacity: 0, x: 8, scale: 0.95, transition: { duration: 0.15, ease: [0.23, 1, 0.32, 1] } }}
               className='rounded-md shadow-md'
             >
               <Link

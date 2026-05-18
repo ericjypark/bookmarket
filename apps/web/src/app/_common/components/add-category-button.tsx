@@ -38,7 +38,7 @@ export const AddCategoryButton = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <div className='relative ml-4 flex cursor-pointer items-center justify-center rounded-lg bg-black px-2 py-1 text-white transition-colors hover:bg-black/80'>
+        <div className='relative ml-4 flex cursor-pointer items-center justify-center rounded-lg bg-black px-2 py-1 text-white transition-[transform,background-color] duration-150 ease-out hover:bg-black/80 active:scale-[0.97]'>
           <PlusIcon size={16} />
         </div>
       </SheetTrigger>

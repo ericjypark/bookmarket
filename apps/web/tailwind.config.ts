@@ -15,7 +15,10 @@ export default {
   			sm: 'calc(var(--radius) - 4px)'
   		},
       transitionTimingFunction: {
-        emphasized: 'cubic-bezier(0.16,1,0.3,1)'
+        emphasized: 'cubic-bezier(0.16,1,0.3,1)',
+        out: 'cubic-bezier(0.23,1,0.32,1)',
+        'in-out': 'cubic-bezier(0.77,0,0.175,1)',
+        drawer: 'cubic-bezier(0.32,0.72,0,1)'
       },
   		colors: {
   			background: 'hsl(var(--background))',

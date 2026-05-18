@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { FolderIcon } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
 
@@ -35,7 +35,7 @@ export const AnimatedTab = ({ categories, isShared }: { categories: Category[]; 
       <div className='absolute left-1/2 hidden h-8 -translate-x-1/2 gap-2 bg-background sm:flex'>
         {categories.map(category => (
           <button
-            className='relative cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium'
+            className='relative cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium transition-transform duration-150 ease-out active:scale-[0.97]'
             key={category.id}
             onClick={() => handleCategoryClick(category)}
             style={{
@@ -48,14 +48,14 @@ export const AnimatedTab = ({ categories, isShared }: { categories: Category[]; 
                   className='absolute inset-0 bg-black'
                   layoutId='active-category'
                   style={{ borderRadius: 8 }}
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 />
               )}
             </AnimatePresence>
-            <p className='relative z-10 max-w-20 truncate text-white mix-blend-exclusion transition-opacity duration-300'>
+            <p className='relative z-10 max-w-20 truncate text-white mix-blend-exclusion'>
               {category.name}
             </p>
           </button>
