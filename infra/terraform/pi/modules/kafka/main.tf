@@ -121,15 +121,19 @@ resource "kubernetes_stateful_set_v1" "kafka" {
             name  = "KAFKA_LOG_DIRS"
             value = "/var/lib/kafka/data"
           }
+          env {
+            name  = "KAFKA_HEAP_OPTS"
+            value = "-Xms512m -Xmx512m"
+          }
 
           resources {
             requests = {
               cpu    = "250m"
-              memory = "768Mi"
+              memory = "1536Mi"
             }
             limits = {
               cpu    = "1000m"
-              memory = "1Gi"
+              memory = "2Gi"
             }
           }
 
